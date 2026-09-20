@@ -166,6 +166,20 @@
 
   .hint { font-size: 12px; color: var(--ink-3); }
 
+  .toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); cursor: pointer; }
+  .toggle input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; cursor: pointer; }
+
+  .derived {
+    margin: 12px 0 0;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+  }
+  .derived dt { color: var(--ink-3); }
+
+  .panel-body.is-off { opacity: .45; }
+  .panel-body.is-off input { pointer-events: none; }
+
   /* --- fields --- */
   .field {
     display: grid;
@@ -547,6 +561,33 @@
       </section>
 
       <section class="panel">
+        <div class="panel-head">
+          <span class="eyebrow">Конус на торці</span>
+          <label class="toggle"><input type="checkbox" id="coneOn"> <span>увімкнути</span></label>
+        </div>
+        <div class="panel-body" id="conePanelBody">
+          <p class="hint" style="margin: 0 0 4px;">Вузький кінець конуса збігається з гільзою, широкий — впирається в тубус. Тому кут нахилу стінки і висота задають одне одного: введіть будь-яке, друге порахується.</p>
+          <div class="row2">
+            <div class="field" data-cone="angle">
+              <label for="coneHalf">Кут від осі <span class="unit">°</span></label>
+              <div class="inputwrap"><input type="text" inputmode="decimal" id="coneHalf" autocomplete="off" spellcheck="false"></div>
+              <button class="solve-btn" type="button" data-cone-solve="angle" title="Обчислювати кут" aria-label="Обчислювати кут">=</button>
+            </div>
+            <div class="field" data-cone="h">
+              <label for="coneH">Висота конуса <span class="unit">мм</span></label>
+              <div class="inputwrap"><input type="text" inputmode="decimal" id="coneH" autocomplete="off" spellcheck="false"></div>
+              <button class="solve-btn" type="button" data-cone-solve="h" title="Обчислювати висоту" aria-label="Обчислювати висоту">=</button>
+            </div>
+            <div class="field">
+              <label for="coneGap">Відступ від тубуса <span class="unit">мм</span></label>
+              <div class="inputwrap" style="grid-column: 1 / -1;"><input type="text" inputmode="decimal" id="coneGap" autocomplete="off" spellcheck="false"></div>
+            </div>
+          </div>
+          <dl class="kv derived" id="coneDerived"></dl>
+        </div>
+      </section>
+
+      <section class="panel">
         <div class="panel-head"><span class="eyebrow">Тубус і допуски</span></div>
         <div class="panel-body">
           <div class="row2">
@@ -586,12 +627,10 @@
               <svg id="svgRadial" viewBox="0 0 300 240" role="img" aria-label="Поперечний переріз намотки"></svg>
               <div class="tip" id="radialTip" hidden></div>
               <dl class="kv legend" id="radialLegend"></dl>
-              <span class="hint">Поперек осі — наведіть на намотку, щоб побачити шар</span>
             </div>
             <div class="view">
               <svg id="svgAxial" viewBox="0 0 420 240" role="img" aria-label="Поздовжній переріз намотки"></svg>
               <div class="tip" id="axialTip" hidden></div>
-              <span class="hint">Уздовж осі — наведіть, щоб побачити шар і виток</span>
             </div>
           </div>
         </div>
@@ -610,7 +649,7 @@
             <div class="tablewrap">
               <table>
                 <thead>
-                  <tr><th>Шар</th><th>Ø, мм</th><th>Витків</th><th>Довжина, м</th><th>Разом, км</th></tr>
+                  <tr><th>Шар</th><th>Ø, мм</th><th>Ширина, мм</th><th>Витків</th><th>Довжина, м</th><th>Разом, км</th></tr>
                 </thead>
                 <tbody id="layerRows"></tbody>
               </table>
@@ -622,12 +661,17 @@
           <summary>Як це рахується</summary>
           <div class="details-body">
             <p style="margin: 0 0 4px; color: var(--ink-2); font-size: 13.5px;">Пошарова модель — основна. Витків у шарі та радіус кожного шару:</p>
-            <div class="formula">N = ⌊(L − 2·відступ) / d_волокна⌋
-r_i = d_гільзи/2 + d_волокна/2 + (i−1)·крок
+            <div class="formula">r_i = d_гільзи/2 + d_волокна/2 + (i−1)·крок
 крок = 0.866·d_волокна (гекс) або d_волокна (рядна)
+ширина_i = L − відступи + виступ_конуса(r_i)
+N_i = ⌊ширина_i / d_волокна⌋
 Довжина шару i = N_i · 2π · r_i</div>
+            <p style="margin: 10px 0 4px; color: var(--ink-2); font-size: 13.5px;">Конус не додає шарів — він їх вкорочує. Шар доходить уздовж осі доти, доки поверхня конуса не підніметься до його радіуса, тож нижні шари коротші за верхні:</p>
+            <div class="formula">виступ_конуса(r) = min( (r − d_гільзи/2) / tg(кут_від_осі), висота )</div>
+            <p style="margin: 10px 0 4px; color: var(--ink-2); font-size: 13.5px;">З конусом торець із його боку не має фланця, тому відступ віднімається лише один раз, а без конуса — з обох боків.</p>
             <p style="margin: 10px 0 4px; color: var(--ink-2); font-size: 13.5px;">При гексагональній укладці парні шари сідають у западини непарних, тож містять на один виток менше. Об'ємна модель — швидка звірка через площу кільця:</p>
-            <div class="formula">ℓ = k · L · (D_намотки² − d_гільзи²) / d_волокна²
+            <div class="formula">ℓ = k · V_намотки / (π/4 · d_волокна²)
+V_намотки = кільце над гільзою + простір навколо конуса
 k — коефіцієнт заповнення, для гексагональної решітки π/(2√3) ≈ 0.9069</div>
             <p style="margin: 10px 0 0; color: var(--ink-2); font-size: 13.5px;">Крок спіралі вздовж осі ігнорується: він подовжує виток у (1 + (d/πD)²)^½ разів — для Ø60 мм і волокна 250 мкм це близько +0,00009 %.</p>
           </div>
@@ -666,13 +710,17 @@ k — коефіцієнт заповнення, для гексагональн
     dCore: 60, lCore: 200, dTubeOut: 160, fiberKm: 0,
     tWall: 3, gapR: 1, gapA: 0,
     dFiber: 0.25, packing: "hex", rBend: 30, density: 1.45,
+    coneOn: true, coneHalf: 30, coneH: 79.67, coneGap: 1, coneSolve: "h",
     preset: "g652-250", target: "fiberKm"
   };
 
   var GEOM_KEYS = ["dCore", "lCore", "dTubeOut", "fiberKm"];
-  var NUM_KEYS = ["dCore", "lCore", "dTubeOut", "fiberKm", "tWall", "gapR", "gapA", "dFiber", "rBend", "density"];
+  var NUM_KEYS = ["dCore", "lCore", "dTubeOut", "fiberKm", "tWall", "gapR", "gapA", "dFiber", "rBend", "density",
+                  "coneHalf", "coneH", "coneGap"];
   var HEX_PITCH = Math.sqrt(3) / 2;
-  var MAX_LAYERS = 2000000;
+  // Each capacity probe walks every layer, and a solve probes ~900 times, so
+  // this ceiling is what keeps the worst case interactive rather than merely finite.
+  var MAX_LAYERS = 60000;
   var HEX_FILL = Math.PI / (2 * Math.sqrt(3));
   var SQ_FILL = Math.PI / 4;
 
@@ -739,94 +787,216 @@ k — коефіцієнт заповнення, для гексагональн
       rCore: p.dCore / 2,
       dTubeIn: dTubeIn,
       rMax: dTubeIn / 2 - p.gapR,
-      usableW: p.lCore - 2 * p.gapA
+      // the flare closes one end, so that end carries no flange inset
+      usableW: p.lCore - (p.coneOn ? 1 : 2) * p.gapA
     };
+  }
+
+  // ---------- the winding ----------
+  //
+  // Fibre is laid on a rotating part, so every turn lies in a plane square to the
+  // axis at a fixed radius. A layer is therefore a cylinder of constant radius,
+  // never a shell parallel to the cone. The flare does not add layers of its own:
+  // it cuts each layer short, because a layer runs along the axis only as far as
+  // the point where the rising cone surface reaches that layer's radius.
+  //
+  //   surface(z) = rNarrow + (z - hubEnd) * tan(half)   over the flare
+  //   layer k stops at   z = hubEnd + (r_k - rNarrow) / tan(half),  capped at its height
+  //
+  // Low layers end early, high layers run out over the whole flare.
+
+  function coneGeometry(p) {
+    if (!p.coneOn) return null;
+    var rTubeIn = (p.dTubeOut - 2 * p.tWall) / 2;
+    var rWide = rTubeIn - p.coneGap;  // far end, set by the bore
+    var rNarrow = p.dCore / 2;        // near end, flush with the hub
+    var rise = rWide - rNarrow;
+    if (!(rise > 0)) return null;
+
+    var half, height;
+    if (p.coneSolve === "angle") {
+      height = p.coneH;
+      if (!(height > 0) || !isFinite(height)) return null;
+      half = Math.atan(rise / height);
+    } else {
+      half = p.coneHalf * Math.PI / 180;
+      if (!(half > 0) || half >= Math.PI / 2 - 1e-6) return null;
+      height = rise / Math.tan(half);
+    }
+    if (!(height > 0) || !isFinite(height)) return null;
+
+    return {
+      rNarrow: rNarrow, rWide: rWide, rise: rise,
+      height: height, half: half, tan: Math.tan(half),
+      halfDeg: half * 180 / Math.PI,
+      angleDeg: half * 2 * 180 / Math.PI,
+      slant: height / Math.cos(half)
+    };
+  }
+
+  // How far layer k reaches out along the flare, measured from the hub end.
+  function coneReachAt(cone, r) {
+    if (!cone) return 0;
+    var over = r - cone.rNarrow;
+    if (!(over > 0)) return 0;
+    return Math.min(over / cone.tan, cone.height);
+  }
+
+  function layerRadius(shape, k) {
+    return shape.a + (k - 1) * shape.pitch;
+  }
+
+  // Axial run of layer k: along the hub, then however far it clears the flare.
+  function layerWidth(shape, k) {
+    return shape.g.usableW + coneReachAt(shape.cone, layerRadius(shape, k));
+  }
+
+  function turnsInLayer(shape, k) {
+    var n = Math.floor(layerWidth(shape, k) / shape.g.f + 1e-9);
+    // nested layers sit in the valleys of the one below, one turn short —
+    // but a single-turn layer has no valley to drop into
+    if (shape.packing === "hex" && k % 2 === 0 && n >= 2) n -= 1;
+    return n < 0 ? 0 : n;
+  }
+
+  function layerLength(shape, k) {
+    return turnsInLayer(shape, k) * 2 * Math.PI * layerRadius(shape, k);
   }
 
   // Turns per layer and layer count for the current geometry.
   function capacityShape(p) {
     var g = geometry(p);
     if (!(g.f > 0) || !isFinite(g.f) || !isFinite(g.rMax) || !isFinite(g.usableW)) return null;
-    var turns = Math.floor((g.usableW + 1e-9) / g.f);
-    if (!(turns >= 1)) return null;
-    // A single turn per layer leaves no valleys, so nesting is impossible:
-    // the winding is row-on-row whatever the user picked.
-    var packing = p.packing === "hex" && turns >= 2 ? "hex" : "stack";
+    if (g.usableW < 0) return null; // flange insets eat the whole hub
+    var cone = coneGeometry(p);
+    // a cone switched on but geometrically impossible must not silently become
+    // a plain cylinder — inverse solvers would then hand back bogus geometry
+    if (p.coneOn && !cone) return { coneInvalid: true, layers: 0 };
+    var baseTurns = Math.floor((g.usableW + 1e-9) / g.f);
+    // with a flare even a hub too narrow on its own can still carry turns
+    if (!(baseTurns >= 1) && !cone) return null;
+    var packing = p.packing === "hex" ? "hex" : "stack";
     var pitch = packing === "hex" ? g.f * HEX_PITCH : g.f;
-    var span = g.rMax - g.rCore - g.f; // room for centres beyond the first layer
+    var span = g.rMax - g.rCore - g.f;
     if (span < -1e-9) return null;
     var layers = Math.floor(span / pitch + 1e-9) + 1;
     if (!(layers >= 1) || !isFinite(layers)) return null;
     if (layers > MAX_LAYERS) return { overflow: true, layers: layers };
     g.pitch = pitch;
-    return { g: g, turns: turns, layers: layers, a: g.rCore + g.f / 2, packing: packing, pitch: pitch };
+
+    var shape = {
+      g: g, layers: layers, a: g.rCore + g.f / 2,
+      packing: packing, pitch: pitch, cone: cone,
+      turns: baseTurns
+    };
+    if (turnsOfLayers(shape, layers) < 1) return null;
+    return shape;
   }
 
-  // Closed-form sum of layer lengths, in mm, for the first n layers.
-  function lengthOfLayers(shape, n, packing) {
-    if (!shape || shape.overflow || n <= 0) return 0;
-    packing = shape.packing;
-    var a = shape.a, p = shape.pitch, N = shape.turns;
-    var sumAll = n * a + p * n * (n - 1) / 2;
-    var evenAdj = 0;
-    if (packing === "hex") {
-      var m = Math.floor(n / 2);
-      evenAdj = m * a + p * m * m;
+  // Cumulative fibre length through layer n, in mm. Each layer has its own axial
+  // run once a flare is present, so this is a running sum rather than a formula.
+  // Total length with no allocation — this is the hot path for the solvers.
+  //
+  // Without a flare every layer has the same axial run, so the whole sum closes
+  // into a formula and a probe costs O(1) instead of walking every layer. The
+  // hex correction removes one turn from each even layer, hence the m terms.
+  function totalLengthPlain(shape) {
+    var n = shape.layers, N = shape.turns, a = shape.a, pitch = shape.pitch;
+    var m = shape.packing === "hex" ? Math.floor(n / 2) : 0;
+    var sumR = n * a + pitch * n * (n - 1) / 2;          // sum of all layer radii
+    var sumEvenR = m * a + pitch * m * m;                 // sum of even layer radii
+    shape.totalTurns = N * n - m;
+    return 2 * Math.PI * (N * sumR - sumEvenR);
+  }
+
+  function totalLength(shape) {
+    if (shape.total != null) return shape.total;
+    if (!shape.cone && shape.turns >= (shape.packing === "hex" ? 2 : 1)) {
+      shape.total = totalLengthPlain(shape);
+      return shape.total;
     }
-    return 2 * Math.PI * (N * sumAll - evenAdj);
+    var sum = 0, turns = 0;
+    for (var k = 1; k <= shape.layers; k++) {
+      var t = turnsInLayer(shape, k);
+      turns += t;
+      sum += t * 2 * Math.PI * layerRadius(shape, k);
+    }
+    shape.total = sum;
+    shape.totalTurns = turns;
+    return sum;
   }
 
-  function turnsOfLayers(shape, n, packing) {
-    if (!shape || shape.overflow || n <= 0) return 0;
-    var total = shape.turns * n;
-    if (shape.packing === "hex") total -= Math.floor(n / 2);
-    return total;
+  function prefixLengths(shape) {
+    if (shape.prefix) return shape.prefix;
+    var out = new Float64Array(shape.layers + 1);
+    var turns = new Float64Array(shape.layers + 1);
+    var sum = 0, t = 0;
+    for (var k = 1; k <= shape.layers; k++) {
+      sum += layerLength(shape, k);
+      t += turnsInLayer(shape, k);
+      out[k] = sum;
+      turns[k] = t;
+    }
+    shape.prefix = out;
+    shape.turnPrefix = turns;
+    return out;
   }
 
-  // Full capacity of the current geometry.
+  function lengthOfLayers(shape, n) {
+    if (!shape || shape.overflow || shape.coneInvalid || n <= 0) return 0;
+    if (n >= shape.layers) return totalLength(shape);
+    return prefixLengths(shape)[n];
+  }
+
+  function turnsOfLayers(shape, n) {
+    if (!shape || shape.overflow || shape.coneInvalid || n <= 0) return 0;
+    if (n >= shape.layers) { totalLength(shape); return shape.totalTurns; }
+    prefixLengths(shape);
+    return shape.turnPrefix[n];
+  }
+
   function capacity(p) {
     var shape = capacityShape(p);
-    if (!shape || shape.overflow) {
-      return { ok: false, overflow: !!(shape && shape.overflow), layers: shape ? shape.layers : 0,
-               mm: 0, turns: 0, rWound: p.dCore / 2, shape: null };
+    if (!shape || shape.overflow || shape.coneInvalid) {
+      return { ok: false, overflow: !!(shape && shape.overflow),
+               coneInvalid: !!(shape && shape.coneInvalid),
+               layers: shape ? shape.layers : 0, mm: 0, turns: 0,
+               rWound: p.dCore / 2, shape: null };
     }
     var n = shape.layers;
-    var mm = lengthOfLayers(shape, n, shape.packing);
+    var mm = lengthOfLayers(shape, n);
     if (!isFinite(mm)) {
       return { ok: false, overflow: false, mm: 0, layers: 0, turns: 0, rWound: p.dCore / 2, shape: null };
     }
     return {
-      ok: true,
-      shape: shape,
-      layers: n,
-      turns: turnsOfLayers(shape, n, shape.packing),
+      ok: true, shape: shape, layers: n,
+      turns: turnsOfLayers(shape, n),
       mm: mm,
-      rWound: shape.a + (n - 1) * shape.pitch + shape.g.f / 2
+      rWound: layerRadius(shape, n) + shape.g.f / 2,
+      cone: shape.cone
     };
   }
 
-  // Turns in layer i, counting from 1.
-  function turnsInLayer(shape, i) {
-    return shape.packing === "hex" && i % 2 === 0 ? Math.max(shape.turns - 1, 0) : shape.turns;
-  }
-
   // How many layers a given length occupies, and how full the topmost one is.
-  // Binary search, so a million-layer winding costs ~20 steps instead of a million.
-  function occupancy(p, targetMM) {
-    var shape = capacityShape(p);
-    if (!shape || shape.overflow) return { layers: 0, rWound: p.dCore / 2, turns: 0, shape: null };
-    if (!(targetMM > 0)) {
-      return { layers: 0, rWound: shape.g.rCore, turns: 0, shape: shape, partial: null };
+  function occupancy(p, targetMM, shape) {
+    if (!shape) shape = capacityShape(p);
+    if (!shape || shape.overflow || shape.coneInvalid) {
+      return { layers: 0, rWound: p.dCore / 2, turns: 0, shape: null };
     }
-    // smallest n with lengthOfLayers(n) >= targetMM
+    if (!(targetMM > 0)) {
+      return { layers: 0, rWound: shape.g.rCore, turns: 0, shape: shape, partial: false };
+    }
+    var pre = prefixLengths(shape);
+    targetMM = Math.min(targetMM, pre[shape.layers]);
+
     var lo = 1, hi = shape.layers, used = shape.layers;
     while (lo <= hi) {
       var mid = Math.floor((lo + hi) / 2);
-      if (lengthOfLayers(shape, mid, shape.packing) >= targetMM - 1e-6) { used = mid; hi = mid - 1; }
+      if (pre[mid] >= targetMM - 1e-6) { used = mid; hi = mid - 1; }
       else lo = mid + 1;
     }
-    var below = lengthOfLayers(shape, used - 1, shape.packing);
-    var rTop = shape.a + (used - 1) * shape.pitch;
+    var below = pre[used - 1];
+    var rTop = layerRadius(shape, used);
     var fullTurns = turnsInLayer(shape, used);
     var remain = Math.max(targetMM - below, 0);
     var perTurn = 2 * Math.PI * rTop;
@@ -834,8 +1004,7 @@ k — коефіцієнт заповнення, для гексагональн
     return {
       layers: used,
       shape: shape,
-      // the topmost layer is only as full as the fibre reaching it
-      turns: turnsOfLayers(shape, used - 1, shape.packing) + Math.ceil(topTurns - 1e-9),
+      turns: turnsOfLayers(shape, used - 1) + Math.ceil(topTurns - 1e-9),
       topTurns: topTurns,
       topLength: Math.min(remain, fullTurns * perTurn),
       partial: topTurns < fullTurns - 1e-9,
@@ -843,30 +1012,71 @@ k — коефіцієнт заповнення, для гексагональн
     };
   }
 
-  function volumeLength(p, rWound) {
-    var g = geometry(p);
-    var dw = 2 * rWound;
-    if (!(dw > p.dCore) || !(g.usableW > 0) || !(g.f > 0)) return 0;
+  // Volume the winding occupies: the annulus over the hub, plus the wedge over
+  // the flare where the cone surface rises through it.
+  function windingVolume(p, shape, rWound) {
+    var g = shape.g, cone = shape.cone;
+    var v = Math.PI * (rWound * rWound - g.rCore * g.rCore) * g.usableW;
+    if (cone) {
+      var hUse = coneReachAt(cone, rWound);
+      var rEnd = cone.rNarrow + hUse * cone.tan;
+      // integral of (rWound^2 - surface(z)^2) dz from 0 to hUse
+      var solid = (rEnd * rEnd * rEnd - cone.rNarrow * cone.rNarrow * cone.rNarrow) / (3 * cone.tan);
+      v += Math.PI * (rWound * rWound * hUse - solid);
+    }
+    return Math.max(v, 0);
+  }
+
+  function volumeLength(p, shape, rWound) {
+    if (!shape) return 0;
     var k = p.packing === "hex" ? HEX_FILL : SQ_FILL;
-    return k * g.usableW * (dw * dw - p.dCore * p.dCore) / (g.f * g.f);
+    var fibreArea = Math.PI / 4 * p.dFiber * p.dFiber;
+    if (!(fibreArea > 0)) return 0;
+    return k * windingVolume(p, shape, rWound) / fibreArea;
   }
 
   // ---------- inverse solving ----------
 
   // Capacity as a function of one geometric key, in mm.
+  // Overflow means "more layers than we will ever compute", i.e. far more than
+  // any target — reporting 0 there would read as "does not fit" and derail the
+  // search. An impossible cone is a hard reject: 0.
   function capacityWith(p, key, value) {
     var q = {};
     for (var k in p) if (Object.prototype.hasOwnProperty.call(p, k)) q[k] = p[k];
     q[key] = value;
-    return capacity(q).mm;
+    var cap = capacity(q);
+    if (cap.overflow) return Infinity;
+    return cap.mm;
   }
 
-  // Capacity steps with layer count, so scan coarsely then bisect the step edge.
+  // Layer count steps as a geometric key grows, so the capacity curve is a
+  // staircase: scan coarsely for the step that crosses the target, then bisect
+  // that step. A refinement pass walks outwards when the scan grid straddles a
+  // narrow window.
   function solveGeom(p, key, targetMM, lo, hi, increasing) {
     if (!(targetMM > 0)) return null;
-    var STEPS = 480, i, x, v;
+    var STEPS = 900, i, x, v;
     var prevX = lo, prevV = capacityWith(p, key, lo);
     if (increasing && prevV >= targetMM) return lo;
+
+    // Bracket the answer first. A fixed upper bound forces a coarse grid over a
+    // range that is mostly empty, and a coarse grid steps over narrow windows,
+    // so grow the bound geometrically until it clears the target and search
+    // only the last doubling.
+    if (increasing) {
+      var span = Math.max(hi - lo, 1e-6), bound = lo + Math.min(span, Math.max(lo, 1));
+      var reached = false;
+      for (i = 0; i < 48; i++) {
+        if (bound > hi) { bound = hi; }
+        if (capacityWith(p, key, bound) >= targetMM) { reached = true; break; }
+        if (bound >= hi) break;
+        bound = lo + (bound - lo) * 2;
+      }
+      if (!reached) return null;
+      lo = Math.max(lo, lo + (bound - lo) / 2 - (bound - lo) / 2); // keep lo
+      hi = bound;
+    }
 
     var loEdge = null, hiEdge = null;
     for (i = 1; i <= STEPS; i++) {
@@ -883,7 +1093,7 @@ k — коефіцієнт заповнення, для гексагональн
       if (!increasing && prevV >= targetMM) return hi; // still fits at the far end
       return null;
     }
-    for (i = 0; i < 70; i++) {
+    for (i = 0; i < 80; i++) {
       var mid = (loEdge + hiEdge) / 2;
       var mv = capacityWith(p, key, mid);
       if (increasing) {
@@ -892,39 +1102,131 @@ k — коефіцієнт заповнення, для гексагональн
         if (mv >= targetMM) loEdge = mid; else hiEdge = mid;
       }
     }
-    return increasing ? hiEdge : loEdge;
+    var answer = increasing ? hiEdge : loEdge;
+
+    // With a flare on the same dimension the capacity is not monotone: raising
+    // the bore also steepens the cone, which shortens every layer, so a smaller
+    // value further down can still clear the target. The bisection only finds a
+    // local edge, so sweep the whole bracket for the smallest one that fits.
+    // Only a flare riding on the same dimension makes the curve non-monotonic;
+    // otherwise the bisection edge is already the smallest value that fits.
+    var coupled = p.coneOn && (key === "dTubeOut" || key === "dCore");
+    if (increasing && coupled) {
+      var sweepLo = lo, sweepHi = answer, best = answer;
+      var stepSweep = (sweepHi - sweepLo) / STEPS;
+      if (stepSweep > 0) {
+        for (i = 0; i <= STEPS; i++) {
+          var xs = sweepLo + stepSweep * i;
+          if (capacityWith(p, key, xs) >= targetMM - 1e-6) {
+            // refine between the last miss and this hit
+            var l2 = Math.max(sweepLo, xs - stepSweep), h2 = xs;
+            for (var j = 0; j < 60; j++) {
+              var m2 = (l2 + h2) / 2;
+              if (capacityWith(p, key, m2) >= targetMM - 1e-6) h2 = m2; else l2 = m2;
+            }
+            best = h2;
+            break;
+          }
+        }
+      }
+      answer = Math.min(answer, best);
+    }
+    return answer;
   }
 
-  // Capacity is NOT monotonic in the hub diameter: a fatter hub lengthens every
-  // turn but eventually costs a whole layer, so the curve is saw-toothed and a
-  // bisection can miss valid hubs entirely. Solve it structurally instead.
+  // The hub diameter is the hard case: a fatter hub lengthens every turn but
+  // eventually costs a whole layer, so the capacity curve is saw-toothed and a
+  // plain grid scan can step straight over a narrow tooth.
   //
-  // A hub radius yields exactly n layers while it sits in the window
-  //   (rMax - f - n*pitch, rMax - f - (n-1)*pitch]
-  // and within one window the capacity grows with the radius, peaking at the top
-  // of the window. Windows shrink as n grows, so the first n whose peak clears
-  // the target carries the largest hub that still fits the fibre.
-  function solveCore(p, targetMM) {
+  // Solve it structurally. A hub radius yields exactly n layers while it sits in
+  //   (rMax - f - n*pitch,  rMax - f - (n-1)*pitch]
+  // and those windows tile the whole range without gaps. Walking them from the
+  // widest hub down, the first window whose best point clears the target holds
+  // the largest hub that fits — no window can be skipped.
+  function solveHub(p, targetMM, hiLimit) {
+    if (!(targetMM > 0)) return null;
     var f = p.dFiber;
     var rMax = (p.dTubeOut - 2 * p.tWall) / 2 - p.gapR;
-    var usableW = p.lCore - 2 * p.gapA;
-    if (!(f > 0) || !isFinite(rMax) || !isFinite(usableW) || !(targetMM > 0)) return null;
-    var turns = Math.floor((usableW + 1e-9) / f);
-    if (!(turns >= 1)) return null;
-    var packing = p.packing === "hex" && turns >= 2 ? "hex" : "stack";
-    var pitch = packing === "hex" ? f * HEX_PITCH : f;
+    if (!(f > 0) || !isFinite(rMax)) return null;
+    var pitch = p.packing === "hex" ? f * HEX_PITCH : f;
+    var rHiLimit = hiLimit / 2;
 
-    var nMax = Math.floor((rMax - f / 2 - f) / pitch + 1e-9) + 1;
-    if (!(nMax >= 1) || !isFinite(nMax) || nMax > MAX_LAYERS) return null;
+    var nMax = Math.floor((rMax - f) / pitch + 1e-9) + 1;
+    if (!(nMax >= 1) || !isFinite(nMax)) return null;
+    nMax = Math.min(nMax, MAX_LAYERS);
 
-    for (var n = 1; n <= nMax; n++) {
-      var rHi = rMax - f - (n - 1) * pitch; // largest hub radius still giving n layers
-      if (!(rHi > 0)) break;
-      var m = packing === "hex" ? Math.floor(n / 2) : 0;
-      var peak = 2 * Math.PI * ((rHi + f / 2) * (turns * n - m) +
-                                pitch * (turns * n * (n - 1) / 2 - m * m));
-      if (!isFinite(peak)) return null;
-      if (peak >= targetMM - 1e-6) return 2 * rHi;
+    var topOf = function (n) { return Math.min(rMax - f - (n - 1) * pitch, rHiLimit); };
+    var botOf = function (n) { return Math.max(rMax - f - n * pitch, 1e-9); };
+    var fits = function (r) {
+      return r > 0 && capacityWith(p, "dCore", 2 * r) >= targetMM - 1e-6;
+    };
+
+    // Capacity at a window's top edge grows with the layer count, so the first
+    // window that clears the target can be found by bisection rather than by
+    // walking every window — which would be O(layers^2) on fine fibre.
+    var lo = 1, hi = nMax, firstN = null;
+    while (lo <= hi) {
+      var mid = Math.floor((lo + hi) / 2);
+      if (fits(topOf(mid))) { firstN = mid; hi = mid - 1; }
+      else lo = mid + 1;
+    }
+
+    // The staircase is not perfectly monotone, so look a few windows below the
+    // hit for an even larger hub. Scan from a fixed base — moving the index
+    // inside the loop would skip windows.
+    if (firstN !== null) {
+      var base = firstN;
+      for (var back = 1; back <= 8 && base - back >= 1; back++) {
+        if (fits(topOf(base - back))) firstN = base - back;
+      }
+      return 2 * topOf(firstN);
+    }
+
+    // nothing clears a window top: the answer, if any, sits inside a window
+    var probeN = [1, Math.floor(nMax / 2), nMax];
+    for (var i = 0; i < probeN.length; i++) {
+      var n = probeN[i];
+      if (n < 1) continue;
+      if (!fits(botOf(n))) continue;
+      var a = botOf(n), b = topOf(n);
+      for (var j = 0; j < 60; j++) {
+        var m = (a + b) / 2;
+        if (fits(m)) a = m; else b = m;
+      }
+      return 2 * a;
+    }
+    return null;
+  }
+
+  // The tube diameter has layer windows too: the layer count only changes when
+  // the bore crosses a pitch boundary. Walking those windows finds the true
+  // smallest tube, where a fixed grid can step straight over a one-step window.
+  function solveTube(p, targetMM, lo) {
+    if (!(targetMM > 0)) return null;
+    var f = p.dFiber, pitch = p.packing === "hex" ? f * HEX_PITCH : f;
+    var rCore = p.dCore / 2;
+    if (!(f > 0) || !(pitch > 0)) return null;
+
+    // bore radius that yields exactly n layers sits in
+    //   [rCore + f + (n-1)*pitch,  rCore + f + n*pitch)
+    var tubeFor = function (rMax) { return 2 * (rMax + p.gapR) + 2 * p.tWall; };
+    var fits = function (d) { return capacityWith(p, "dTubeOut", d) >= targetMM - 1e-6; };
+
+    var nStart = Math.max(Math.floor((lo / 2 - p.tWall - p.gapR - rCore - f) / pitch) + 1, 1);
+    for (var n = nStart; n <= MAX_LAYERS; n++) {
+      var rLo = rCore + f + (n - 1) * pitch;
+      var rHi = rCore + f + n * pitch;
+      var dLo = Math.max(tubeFor(rLo), lo), dHi = tubeFor(rHi);
+      if (dHi <= dLo) continue;
+      // capacity peaks at the top of the window
+      if (!fits(dHi - 1e-9)) continue;
+      if (fits(dLo)) return dLo;
+      var a = dLo, b = dHi;
+      for (var i = 0; i < 80; i++) {
+        var mid = (a + b) / 2;
+        if (fits(mid)) b = mid; else a = mid;
+      }
+      return b;
     }
     return null;
   }
@@ -960,24 +1262,76 @@ k — коефіцієнт заповнення, для гексагональн
       if (c.k === target) continue; // this one is the answer, not an input
       var val = p[c.k];
       if (!isFinite(val)) {
-        msgs.push({ level: "bad", tag: "Ввід", text: c.label + " — порожнє поле або не число." });
+        msgs.push({ level: "bad", tag: "Ввід", field: c.k, text: c.label + " — порожнє поле або не число." });
         return out;
       }
       if (val < 0) {
-        msgs.push({ level: "bad", tag: "Ввід", text: c.label + " не може бути від'ємним." });
+        msgs.push({ level: "bad", tag: "Ввід", field: c.k, text: c.label + " не може бути від'ємним." });
         return out;
       }
       if (c.positive && val === 0) {
-        msgs.push({ level: "bad", tag: "Ввід", text: c.label + " має бути більшим за нуль." });
+        msgs.push({ level: "bad", tag: "Ввід", field: c.k, text: c.label + " має бути більшим за нуль." });
         return out;
       }
-      if (val > 1e7) {
-        msgs.push({ level: "bad", tag: "Ввід", text: c.label + " виходить за розумні межі (понад 10 м)." });
+      if (val > 1e4) {
+        msgs.push({ level: "bad", tag: "Ввід", field: c.k, text: c.label + " виходить за розумні межі (понад 10 м)." });
         return out;
       }
     }
+    if (p.coneOn) {
+      var coneInput = p.coneSolve === "angle" ? p.coneH : p.coneHalf;
+      if (!isFinite(coneInput) || !isFinite(p.coneGap)) {
+        msgs.push({ level: "bad", tag: "Конус", field: p.coneSolve === "angle" ? "coneH" : "coneHalf",
+                    text: "Параметри конуса — порожнє поле або не число." });
+        return out;
+      }
+      if (p.coneSolve !== "angle" && (p.coneHalf <= 0 || p.coneHalf >= 90)) {
+        msgs.push({ level: "bad", tag: "Конус", field: "coneHalf", text: "Кут від осі має бути між 0° і 90°." });
+        return out;
+      }
+      if (p.coneSolve === "angle" && !(p.coneH > 0)) {
+        msgs.push({ level: "bad", tag: "Конус", field: "coneH", text: "Висота конуса має бути більшою за нуль." });
+        return out;
+      }
+      if ((p.coneSolve === "angle" && p.coneH < 0) || p.coneGap < 0) {
+        msgs.push({ level: "bad", tag: "Конус", field: p.coneGap < 0 ? "coneGap" : "coneH",
+                    text: "Висота конуса і відступ від тубуса не можуть бути від'ємними." });
+        return out;
+      }
+      if ((p.coneSolve === "angle" && p.coneH > 1e4) || p.coneGap > 1e4) {
+        msgs.push({ level: "bad", tag: "Конус", field: p.coneGap > 1e7 ? "coneGap" : "coneH",
+                    text: "Розміри конуса виходять за розумні межі." });
+        return out;
+      }
+      if (target !== "dTubeOut" && p.coneGap >= (p.dTubeOut - 2 * p.tWall) / 2) {
+        msgs.push({
+          level: "bad", tag: "Конус",
+          text: "Відступ " + fmtAuto(p.coneGap) + " мм не залишає місця для конуса — внутрішній радіус тубуса лише " +
+                fmtAuto((p.dTubeOut - 2 * p.tWall) / 2) + " мм."
+        });
+        return out;
+      }
+      if (target !== "dTubeOut" && target !== "dCore" &&
+          (p.dTubeOut - 2 * p.tWall) / 2 - p.coneGap <= p.dCore / 2) {
+        msgs.push({
+          level: "bad", tag: "Конус",
+          text: "Конус не розширюється: його широкий кінець Ø" +
+                fmtAuto(p.dTubeOut - 2 * p.tWall - 2 * p.coneGap) +
+                " мм не більший за гільзу Ø" + fmtAuto(p.dCore) + " мм."
+        });
+        return out;
+      }
+    }
+    if (target !== "lCore" && p.lCore - (p.coneOn ? 1 : 2) * p.gapA < 0) {
+      msgs.push({
+        level: "bad", tag: "Ввід",
+        field: "gapA",
+        text: "Відступ з торців " + fmtAuto(p.gapA) + " мм більший за саму гільзу " + fmtAuto(p.lCore) + " мм."
+      });
+      return out;
+    }
     if (target !== "fiberKm" && (!isFinite(p.fiberKm) || p.fiberKm < 0 || p.fiberKm > 1e6)) {
-      msgs.push({ level: "bad", tag: "Ввід", text: "Довжина оптоволокна — порожнє поле, від'ємне або надто велике число." });
+      msgs.push({ level: "bad", tag: "Ввід", field: "fiberKm", text: "Довжина оптоволокна — порожнє поле, від'ємне або надто велике число." });
       return out;
     }
     if (target !== "dTubeOut" && p.dTubeOut - 2 * p.tWall <= 0) {
@@ -1000,6 +1354,15 @@ k — коефіцієнт заповнення, для гексагональн
 
     if (target === "fiberKm") {
       var cap = capacity(p);
+      if (cap.coneInvalid) {
+        msgs.push({
+          level: "bad", tag: "Конус",
+          text: "Конус неможливий: його широкий кінець Ø" +
+                fmtAuto(p.dTubeOut - 2 * p.tWall - 2 * p.coneGap) +
+                " мм не більший за гільзу Ø" + fmtAuto(p.dCore) + " мм."
+        });
+        return out;
+      }
       if (!cap.ok) {
         msgs.push(cap.overflow
           ? { level: "bad", tag: "Масштаб", text: "Така комбінація дає " + fmtInt(cap.layers) + " шарів — це поза межами фізично осмисленої намотки. Збільште діаметр волокна або зменште тубус." }
@@ -1017,10 +1380,12 @@ k — коефіцієнт заповнення, для гексагональн
       var solvedValue = null;
       if (target === "dTubeOut") {
         var loT = p.dCore + 2 * p.dFiber + 2 * p.gapR + 2 * p.tWall;
-        solvedValue = solveGeom(p, "dTubeOut", targetMM, loT, Math.max(loT * 4, loT + 4000), true);
+        solvedValue = solveTube(p, targetMM, loT);
         if (solvedValue !== null) solvedValue = roundTo(solvedValue, 0.01, true);
       } else if (target === "lCore") {
-        var loL = p.dFiber + 2 * p.gapA;
+        // with a flare a hub too short for even one turn can still carry fibre,
+        // so the search must start below one fibre diameter
+        var loL = p.coneOn ? p.gapA + 1e-6 : p.dFiber + 2 * p.gapA;
         solvedValue = solveGeom(p, "lCore", targetMM, loL, Math.max(loL * 4, loL + 20000), true);
         if (solvedValue !== null) solvedValue = roundTo(solvedValue, 0.01, true);
       } else if (target === "dCore") {
@@ -1029,23 +1394,29 @@ k — коефіцієнт заповнення, для гексагональн
           msgs.push({ level: "bad", tag: "Геометрія", text: "Тубус замалий: навіть без гільзи в нього не лягає шар волокна." });
           return out;
         }
-        solvedValue = solveCore(p, targetMM);
+        solvedValue = solveHub(p, targetMM, hiC);
         if (solvedValue !== null) {
-          solvedValue = Math.min(roundTo(solvedValue, 0.01, false), hiC);
-          // rounding must never drop below the requested length
-          var guard = 0;
-          while (guard < 64 && solvedValue > 0.01 && capacityWith(p, "dCore", solvedValue) < targetMM - 1e-6) {
-            solvedValue = roundTo(solvedValue - 0.01, 0.01, false);
-            guard++;
+          // Rounding down inside a window lowers the capacity, so the rounded
+          // value may no longer fit. The next window's top edge is the next
+          // candidate — stepping by a fraction of a pitch would skip past it.
+          var pitchGuard = (p.packing === "hex" ? p.dFiber * HEX_PITCH : p.dFiber);
+          var cand = solvedValue, found = null;
+          for (var w = 0; w < 4000 && cand > 0.01; w++) {
+            var rounded = Math.min(roundTo(cand, 0.01, false), hiC);
+            if (rounded > 0 && capacityWith(p, "dCore", rounded) >= targetMM - 1e-6) {
+              found = rounded;
+              break;
+            }
+            cand = cand - 2 * pitchGuard; // one window down, in diameter
           }
-          if (!(solvedValue > 0) || capacityWith(p, "dCore", solvedValue) < targetMM - 1e-6) solvedValue = null;
+          solvedValue = found;
         }
       }
 
       if (solvedValue !== null && isFinite(solvedValue) && target !== "dCore") {
         // rounding up must still clear the target for the monotone cases
         var guardUp = 0;
-        while (guardUp < 64 && capacityWith(p, target, solvedValue) < targetMM - 1e-6) {
+        while (guardUp < 400 && capacityWith(p, target, solvedValue) < targetMM - 1e-6) {
           solvedValue = roundTo(solvedValue + 0.01, 0.01, true);
           guardUp++;
         }
@@ -1069,6 +1440,13 @@ k — коефіцієнт заповнення, для гексагональн
       out.effective = q;
       out.cap = capacity(q);
       out.usedMM = targetMM;
+      if (out.cap.coneInvalid) {
+        msgs.push({
+          level: "bad", tag: "Конус",
+          text: "За такої геометрії конус неможливий: його широкий кінець не більший за гільзу. Змініть відступ від тубуса або вимкніть конус."
+        });
+        return out;
+      }
       if (!out.cap.ok) {
         msgs.push({ level: "bad", tag: "Немає розв'язку", text: "Підібране значення не дає придатної намотки. Перевірте інші параметри." });
         return out;
@@ -1082,13 +1460,14 @@ k — коефіцієнт заповнення, для гексагональн
       return out;
     }
 
-    var occ = occupancy(eff, out.usedMM);
+    var occ = occupancy(eff, out.usedMM, cap2.shape);
     var g = geometry(eff);
     var rWound = occ.layers > 0 ? occ.rWound : g.rCore;
-    var volMM = volumeLength(eff, rWound);
+
+    var volMM = volumeLength(eff, cap2.shape, rWound);
     var fiberVolMM3 = Math.PI / 4 * eff.dFiber * eff.dFiber * out.usedMM;
-    var annulusMM3 = Math.PI / 4 * (4 * rWound * rWound - eff.dCore * eff.dCore) * g.usableW;
-    var massKg = fiberVolMM3 * 1e-3 * eff.density / 1000;
+    var annulusMM3 = windingVolume(eff, cap2.shape, rWound);
+    var massKg = Math.PI / 4 * eff.dFiber * eff.dFiber * out.usedMM * 1e-3 * eff.density / 1000;
 
     out.ok = true;
     out.eff = eff;
@@ -1101,6 +1480,7 @@ k — коефіцієнт заповнення, для гексагональн
     out.massKg = massKg;
     out.fillActual = annulusMM3 > 0 ? fiberVolMM3 / annulusMM3 : 0;
     out.headroomKm = out.capKm - out.km;
+    out.cone = cap2.cone;
 
     // Advisories.
     if (eff.dCore / 2 < eff.rBend - 1e-9) {
@@ -1124,8 +1504,27 @@ k — коефіцієнт заповнення, для гексагональн
     if (lastLayerFrac > 0.15 && lastLayerFrac < 0.999) {
       msgs.push({
         level: "info", tag: "Ширина",
-        text: "Уздовж осі залишається " + fmtAuto(lastLayerFrac * eff.dFiber) + " мм незаповненого місця в кожному шарі — ширина гільзи не кратна діаметру волокна."
+        text: "Уздовж гільзи залишається " + fmtAuto(lastLayerFrac * eff.dFiber) +
+              " мм незаповненого місця" + (eff.coneOn ? " (у шарах, що не дістають конуса)" : " в кожному шарі") +
+              " — ширина гільзи не кратна діаметру волокна."
       });
+    }
+    if (eff.coneOn && !cap2.cone) {
+      msgs.push({
+        level: "warn", tag: "Конус",
+        text: "Конус не враховано: перевірте кут, висоту та відступ від тубуса."
+      });
+    }
+    if (eff.coneOn && cap2.cone) {
+      var cs = cap2.cone;
+      var rNarrow = cs.rNarrow;
+      if (rNarrow < eff.rBend - 1e-9) {
+        msgs.push({
+          level: "warn", tag: "Конус",
+          text: "Вузький кінець конуса має радіус " + fmtAuto(rNarrow) + " мм — менше за мінімальний радіус згину " +
+                fmtAuto(eff.rBend) + " мм. Перші витки біля гільзи працюватимуть із втратами."
+        });
+      }
     }
     var diffPct = out.volKm > 0 ? (out.km - out.volKm) / out.volKm * 100 : 0;
     if (Math.abs(diffPct) > 12) {
@@ -1157,7 +1556,6 @@ k — коефіцієнт заповнення, для гексагональн
       var bad = res && !res.ok;
       field.classList.toggle("is-target", state.target === k);
       field.classList.toggle("is-bad", state.target === k && bad);
-      if (els[k]) els[k].setAttribute("aria-invalid", state.target === k && bad ? "true" : "false");
       var btn = field.querySelector(".solve-btn");
       if (btn) btn.setAttribute("aria-pressed", state.target === k ? "true" : "false");
     });
@@ -1169,6 +1567,15 @@ k — коефіцієнт заповнення, для гексагональн
     } else if (res && res.solved == null && state.target !== "fiberKm" && els[state.target] !== document.activeElement) {
       // keep the user's own number visible
     }
+
+    // aria-invalid belongs on the field the error is about
+    var faulty = {};
+    if (res && res.msgs) {
+      res.msgs.forEach(function (m) { if (m.level === "bad" && m.field) faulty[m.field] = true; });
+    }
+    NUM_KEYS.forEach(function (k) {
+      if (els[k]) els[k].setAttribute("aria-invalid", faulty[k] ? "true" : "false");
+    });
 
     var names = { dCore: "діаметр гільзи", lCore: "довжину гільзи", dTubeOut: "діаметр тубуса", fiberKm: "довжину волокна" };
     els.targetHint.textContent = "шукаємо: " + names[state.target];
@@ -1183,7 +1590,10 @@ k — коефіцієнт заповнення, для гексагональн
     var stats = [
       { k: "Довжина волокна", v: fmtAuto(res.km), u: "км", primary: true, sub: fmtInt(res.km * 1000) + " м" },
       { k: "Шарів", v: fmtInt(res.occ.layers), u: "", sub: "крок " + fmtAuto(res.cap.shape.pitch) + " мм" },
-      { k: "Витків", v: fmtInt(res.occ.turns), u: "", sub: res.occ.partial ? "верхній шар неповний" : fmtInt(res.cap.shape.turns) + " на шар" },
+      { k: "Витків", v: fmtInt(res.occ.turns), u: "",
+        sub: res.occ.partial
+          ? "верхній шар неповний"
+          : fmtInt(turnsInLayer(res.cap.shape, 1)) + " у першому шарі" },
       { k: "Ø намотки", v: fmtAuto(2 * res.rWound), u: "мм", sub: "зазор до тубуса " + fmtAuto(res.g.dTubeIn / 2 - res.rWound) + " мм" },
       { k: "Маса волокна", v: fmtAuto(res.massKg), u: "кг", sub: fmtAuto(res.massKg / Math.max(res.km, 1e-9)) + " кг/км" },
       { k: "Заповнення", v: fmt(res.fillActual * 100, 1), u: "%", sub: "від об'єму намотки" }
@@ -1209,6 +1619,43 @@ k — коефіцієнт заповнення, для гексагональн
     return String(s).replace(/[&<>"]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
     });
+  }
+
+  function renderConeInputs(res) {
+    var on = !!state.coneOn;
+    els.coneOn.checked = on;
+    els.conePanelBody.classList.toggle("is-off", !on);
+    ["coneHalf", "coneH", "coneGap"].forEach(function (k) {
+      els[k].disabled = !on;
+    });
+
+    ["angle", "h"].forEach(function (which) {
+      var field = document.querySelector('.field[data-cone="' + which + '"]');
+      if (field) {
+        field.classList.toggle("is-target", on && state.coneSolve === which);
+        var btn = field.querySelector("[data-cone-solve]");
+        if (btn) btn.setAttribute("aria-pressed", on && state.coneSolve === which ? "true" : "false");
+      }
+    });
+
+    var c = res && res.ok ? res.cone : null;
+    if (!on || !c) { els.coneDerived.innerHTML = ""; return; }
+
+    // write the derived half of the pair back into its field
+    if (state.coneSolve === "h" && els.coneH !== document.activeElement) {
+      els.coneH.value = String(Math.round(c.height * 100) / 100);
+      state.coneH = c.height;
+    } else if (state.coneSolve === "angle" && els.coneHalf !== document.activeElement) {
+      els.coneHalf.value = String(Math.round(c.halfDeg * 100) / 100);
+      state.coneHalf = c.halfDeg;
+    }
+
+    els.coneDerived.innerHTML = [
+      ["Ø біля гільзи", fmtAuto(2 * c.rNarrow) + " мм"],
+      ["Ø на широкому кінці", fmtAuto(2 * c.rWide) + " мм"],
+      ["Повний кут при вершині", fmtAuto(c.angleDeg) + "°"],
+      ["Твірна", fmtAuto(c.slant) + " мм"]
+    ].map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("");
   }
 
   function renderCompare(res) {
@@ -1255,10 +1702,10 @@ k — коефіцієнт заповнення, для гексагональн
   }
 
   function layerRow(res, shape, i) {
-    var r = shape.a + (i - 1) * shape.pitch;
+    var r = layerRadius(shape, i);
     var turns = turnsInLayer(shape, i);
-    var len = turns * 2 * Math.PI * r;
-    var cum = lengthOfLayers(shape, i, shape.packing);
+    var len = layerLength(shape, i);
+    var cum = lengthOfLayers(shape, i);
     var partial = false;
     if (i === res.occ.layers) {
       // the fibre may stop part-way through the outermost layer
@@ -1269,8 +1716,9 @@ k — коефіцієнт заповнення, для гексагональн
         partial = true;
       }
     }
+    var width = layerWidth(shape, i);
     return "<tr><td>" + i + (partial ? " *" : "") + "</td><td>" + fmt(2 * r, 2) + "</td><td>" +
-      (partial ? fmt(turns, 1) : fmtInt(turns)) +
+      fmt(width, 1) + "</td><td>" + (partial ? fmt(turns, 1) : fmtInt(turns)) +
       "</td><td>" + fmt(len / 1000, 1) + "</td><td>" + fmt(cum / 1e6, 3) + "</td></tr>";
   }
 
@@ -1379,24 +1827,31 @@ k — коефіцієнт заповнення, для гексагональн
       var i = Math.round((rmm - v.shape.a) / v.pitch) + 1;
       if (i < 1) i = 1;
       if (i > v.layers) i = v.layers;
-      var r = v.shape.a + (i - 1) * v.pitch;
+      var r = layerRadius(v.shape, i);
       var turns = turnsInLayer(v.shape, i);
-      var len = turns * 2 * Math.PI * r;
-      var cum = Math.min(lengthOfLayers(v.shape, i, v.shape.packing), v.usedMM);
+      // a layer too narrow to hold a single turn carries no fibre at all
+      if (!(turns > 0)) {
+        return { title: "Порожньо", rows: [["Радіус", fmt(r, 2) + " мм"],
+                                           ["Тут", "жодного витка не вміщується"]], ring: null };
+      }
+      var len = layerLength(v.shape, i);
+      var cum = Math.min(lengthOfLayers(v.shape, i), v.usedMM);
       var partial = false;
       if (i === v.layers && v.partial) {
         turns = v.topTurns;
         len = v.topLength;
         partial = true;
       }
+      var rows = [
+        ["Діаметр", fmt(2 * r, 2) + " мм"],
+        ["Ширина шару", fmt(layerWidth(v.shape, i), 1) + " мм"],
+        ["Витків", partial ? fmt(turns, 1) : fmtInt(turns)],
+        ["Довжина шару", fmt(len / 1000, 1) + " м"],
+        ["Накопичено", fmt(cum / 1e6, 3) + " км"]
+      ];
       return {
         title: "Шар " + i + " з " + fmtInt(v.layers) + (partial ? " · неповний" : ""),
-        rows: [
-          ["Діаметр", fmt(2 * r, 2) + " мм"],
-          ["Витків", partial ? fmt(turns, 1) : fmtInt(turns)],
-          ["Довжина шару", fmt(len / 1000, 1) + " м"],
-          ["Накопичено", fmt(cum / 1e6, 3) + " км"]
-        ],
+        rows: rows,
         ring: r,
         layerIndex: i
       };
@@ -1442,7 +1897,7 @@ k — коефіцієнт заповнення, для гексагональн
     var offset = shape.packing === "hex" && layerIndex % 2 === 0 ? v.f / 2 : 0;
     var start = v.gapA + offset;
     var span = xmm - start;
-    if (span < -v.f / 2 || xmm > v.gapA + v.usableW + 1e-9) return null;
+    if (span < -v.f / 2 || xmm > v.gapA + layerWidth(shape, layerIndex) + 1e-9) return null;
     var k = Math.floor(span / v.f) + 1;
     var total = turnsInLayer(shape, layerIndex);
     if (k < 1) k = 1;
@@ -1451,9 +1906,81 @@ k — коефіцієнт заповнення, для гексагональн
     return { index: k, total: total, wound: wound };
   }
 
+  // zmm is measured along the axis from the hub end, out over the flare.
+  // Layers here are the same cylinders as over the hub — only shorter — so the
+  // probe is the same one, plus a check that the cone has not risen past it.
+  function probeCone(v, zmm, rmm) {
+    var c = v.cone;
+    if (zmm < -1e-9 || zmm > c.height + 1e-9) return null;
+    var rSurface = c.rNarrow + zmm * c.tan;
+
+    if (rmm < rSurface - 1e-9) {
+      return {
+        title: "Тіло конуса",
+        rows: [
+          ["Ø тут", fmt(2 * rSurface, 2) + " мм"],
+          ["Від гільзи", fmt(zmm, 1) + " мм"],
+          ["Кут від осі", fmtAuto(c.halfDeg) + "°"]
+        ],
+        band: null
+      };
+    }
+
+    var hit = probeRadius(v, rmm);
+    if (hit && hit.ring != null) {
+      var turn = probeTurn(v, hit.layerIndex, v.lCore + zmm);
+      // past the last whole turn the layer simply is not there
+      if (!turn) hit = null;
+      else {
+        hit.rows = hit.rows.concat([["Виток", fmtInt(turn.index) + " з " + fmtInt(turn.total)],
+                                    ["Від гільзи", fmt(zmm, 1) + " мм"]]);
+        if (!turn.wound) hit.rows.push(["Стан", "ще не намотано"]);
+        return hit;
+      }
+    }
+
+    if (rmm <= v.rTubeIn) {
+      return {
+        title: "Вільний простір",
+        rows: [["До тубуса", fmtAuto(v.rTubeIn - rmm) + " мм"], ["Від гільзи", fmt(zmm, 1) + " мм"]],
+        band: null
+      };
+    }
+    if (rmm <= v.rTubeOut) {
+      return { title: "Стінка тубуса", rows: [["Товщина", fmtAuto(v.tWall) + " мм"]], band: null };
+    }
+    return null;
+  }
+
   function hideAxialTip() {
     if (els.axialTip) els.axialTip.hidden = true;
     if (axialHighlight) axialHighlight.setAttribute("visibility", "hidden");
+  }
+
+  // A layer is one cylinder, so its mark is one horizontal band running from the
+  // flange to wherever the cone cuts it off.
+  function drawAxialBand(v, hit) {
+    if (!axialHighlight) return;
+    while (axialHighlight.firstChild) axialHighlight.removeChild(axialHighlight.firstChild);
+    if (hit.ring == null) { axialHighlight.setAttribute("visibility", "hidden"); return; }
+    var band = Math.max(1, v.f * v.s);
+    // draw only what is actually wound: whole turns, not the layer's raw width,
+    // and the outermost layer may be only part-full
+    var turnsHere = v.shape ? turnsInLayer(v.shape, hit.layerIndex) : 0;
+    if (v.partial && hit.layerIndex === v.layers) turnsHere = Math.min(turnsHere, v.topTurns);
+    var wound = turnsHere * v.f;
+    // even hex layers sit half a fibre along the axis, as the tooltip reports
+    var shift = v.shape && v.shape.packing === "hex" && hit.layerIndex % 2 === 0 ? v.f / 2 : 0;
+    var xStart = v.x0 + (v.gapA + shift) * v.s;
+    var xEnd = v.x0 + (v.gapA + shift + wound) * v.s;
+    [-1, 1].forEach(function (sign) {
+      axialHighlight.appendChild(svgEl("rect", {
+        x: xStart, y: v.cy + sign * hit.ring * v.s - band / 2,
+        width: Math.max(xEnd - xStart, 0), height: band,
+        fill: "var(--accent)", opacity: "0.8"
+      }));
+    });
+    axialHighlight.setAttribute("visibility", "visible");
   }
 
   function setupAxialHover() {
@@ -1470,6 +1997,17 @@ k — коефіцієнт заповнення, для гексагональн
 
       var rmm = Math.abs(loc.y - v.cy) / v.s;
       var xmm = (loc.x - v.x0) / v.s;
+
+      // past the hub the cursor is over the flare, which shortens the layers
+      var hit;
+      if (v.cone && xmm > v.lCore) {
+        hit = probeCone(v, xmm - v.lCore, rmm);
+        if (!hit) { hideAxialTip(); return; }
+        drawAxialBand(v, hit);
+        showTip(tip, svg, ev, hit);
+        return;
+      }
+
       var hit = probeRadius(v, rmm);
       if (!hit) { hideAxialTip(); return; }
 
@@ -1485,36 +2023,12 @@ k — коефіцієнт заповнення, для гексагональн
         if (turn) {
           rows.push(["Виток", fmtInt(turn.index) + " з " + fmtInt(turn.total)]);
           if (!turn.wound) rows.push(["Стан", "ще не намотано"]);
-        } else if (v.gapA > 0 && (xmm < v.gapA || xmm > v.gapA + v.usableW)) {
+        } else if (v.gapA > 0 && xmm < v.gapA) {
           rows.push(["Тут", "торцевий відступ"]);
         }
       }
       showTip(tip, svg, ev, { title: hit.title, rows: rows });
-
-      if (axialHighlight) {
-        while (axialHighlight.firstChild) axialHighlight.removeChild(axialHighlight.firstChild);
-        if (hit.ring != null) {
-          var band = Math.max(1, v.f * v.s);
-          [-1, 1].forEach(function (sign) {
-            axialHighlight.appendChild(svgEl("rect", {
-              x: v.x0 + v.gapA * v.s, y: v.cy + sign * hit.ring * v.s - band / 2,
-              width: Math.max(v.usableW * v.s, 0), height: band,
-              fill: "var(--accent)", opacity: "0.75"
-            }));
-          });
-          if (turn) {
-            var tx = v.x0 + (v.gapA + (turn.index - 0.5) * v.f +
-                     (v.shape.packing === "hex" && hit.layerIndex % 2 === 0 ? v.f / 2 : 0)) * v.s;
-            axialHighlight.appendChild(svgEl("line", {
-              x1: tx, y1: v.cy - hit.ring * v.s - band, x2: tx, y2: v.cy + hit.ring * v.s + band,
-              stroke: "var(--accent)", "stroke-width": Math.max(0.8, band * 0.9), opacity: "0.55"
-            }));
-          }
-          axialHighlight.setAttribute("visibility", "visible");
-        } else {
-          axialHighlight.setAttribute("visibility", "hidden");
-        }
-      }
+      drawAxialBand(v, hit);
     });
   }
 
@@ -1558,48 +2072,74 @@ k — коефіцієнт заповнення, для гексагональн
     if (!res.ok) return;
     var W = 420, H = 240;
     var padX = 34, padTop = 24;
+    var coneS = res.cone || null;
+    var coneHMM = coneS ? coneS.height : 0;
     var lenMM = res.eff.lCore;
     var hMM = res.eff.dTubeOut;
-    var sx = (W - 2 * padX) / Math.max(lenMM, 1e-6);
+    var sx = (W - 2 * padX) / Math.max(lenMM + coneHMM, 1e-6);
     var sy = (H - padTop - 60) / Math.max(hMM, 1e-6);
     var s = Math.min(sx, sy);
-    var drawW = lenMM * s, drawH = hMM * s;
-    var x0 = (W - drawW) / 2, cy = padTop + drawH / 2;
+    var drawW = lenMM * s, drawH = hMM * s, coneW = coneHMM * s;
+    var x0 = (W - drawW - coneW) / 2, cy = padTop + drawH / 2;
 
     var tubeIn = res.g.dTubeIn * s / 2;
     var tubeOut = res.eff.dTubeOut * s / 2;
     var core = res.eff.dCore * s / 2;
     var wound = res.rWound * s;
     var gapA = res.eff.gapA * s;
-    var windW = res.g.usableW * s;
 
     // tube walls (top and bottom slabs)
     [-1, 1].forEach(function (sign) {
       svg.appendChild(svgEl("rect", {
         x: x0 - 6, y: sign < 0 ? cy - tubeOut : cy + tubeIn,
-        width: drawW + 12, height: tubeOut - tubeIn,
+        width: drawW + coneW + 12, height: tubeOut - tubeIn,
         fill: "var(--tube)", opacity: "0.55"
       }));
     });
 
-    // winding
+    // The winding is one body. Its top is the outermost layer, its right edge is
+    // the cone surface itself: each layer stops where the cone reaches its radius.
     [-1, 1].forEach(function (sign) {
-      svg.appendChild(svgEl("rect", {
-        x: x0 + gapA, y: sign < 0 ? cy - wound : cy + core,
-        width: Math.max(windW, 0), height: Math.max(wound - core, 0),
-        fill: "var(--fiber)", opacity: "0.32"
-      }));
-      svg.appendChild(svgEl("rect", {
-        x: x0 + gapA, y: sign < 0 ? cy - wound : cy + core,
-        width: Math.max(windW, 0), height: Math.max(wound - core, 0),
-        fill: "none", stroke: "var(--fiber)", "stroke-width": 1
+      var y = function (rmm) { return cy + sign * rmm * s; };
+      var xg = function (zmm) { return x0 + zmm * s; };
+      var hubEnd = res.eff.lCore - (coneS ? 0 : res.eff.gapA);
+      // the model measures reach from the layer's centre radius, not its outside
+      var topLayerR = layerRadius(res.cap.shape, res.occ.layers);
+      var reachTop = coneS ? coneReachAt(coneS, topLayerR) : 0;
+      var d = ["M " + xg(res.eff.gapA) + " " + y(res.eff.dCore / 2)];
+      d.push("L " + xg(res.eff.gapA) + " " + y(res.rWound));
+      d.push("L " + xg(hubEnd + reachTop) + " " + y(res.rWound));
+      if (coneS && reachTop > 0) {
+        // once the winding clears the wide end, the flare stops rising through it
+        if (reachTop >= coneS.height - 1e-9 && res.rWound > coneS.rWide) {
+          d.push("L " + xg(hubEnd + coneS.height) + " " + y(coneS.rWide));
+        }
+        d.push("L " + xg(hubEnd) + " " + y(coneS.rNarrow));
+      } else {
+        d.push("L " + xg(hubEnd) + " " + y(res.eff.dCore / 2));
+      }
+      d.push("Z");
+      svg.appendChild(svgEl("path", {
+        d: d.join(" "), fill: "var(--fiber)", opacity: "0.32",
+        stroke: "var(--fiber)", "stroke-width": 1, "stroke-opacity": "0.9", "stroke-linejoin": "round"
       }));
     });
+
+    // the flare itself
+    if (coneS) {
+      var cx0 = x0 + drawW; // hub end: with a cone the hub runs its full length
+      var rN = coneS.rNarrow * s, rW = coneS.rWide * s;
+      svg.appendChild(svgEl("path", {
+        d: "M " + cx0 + " " + (cy - rN) + " L " + (cx0 + coneW) + " " + (cy - rW) +
+           " L " + (cx0 + coneW) + " " + (cy + rW) + " L " + cx0 + " " + (cy + rN) + " Z",
+        fill: "var(--core)", stroke: "var(--line-strong)", "stroke-width": 1, opacity: "0.9"
+      }));
+    }
 
     // core body
     svg.appendChild(svgEl("rect", { x: x0, y: cy - core, width: drawW, height: 2 * core, fill: "var(--core)", stroke: "var(--line-strong)", "stroke-width": 1, opacity: "0.9" }));
     // axis
-    var axis = svgEl("line", { x1: x0 - 14, y1: cy, x2: x0 + drawW + 14, y2: cy, stroke: "var(--ink-3)", "stroke-width": 0.7, "stroke-dasharray": "7 3 2 3" });
+    var axis = svgEl("line", { x1: x0 - 14, y1: cy, x2: x0 + drawW + coneW + 14, y2: cy, stroke: "var(--ink-3)", "stroke-width": 0.7, "stroke-dasharray": "7 3 2 3" });
     svg.appendChild(axis);
 
     // dimension for length
@@ -1629,11 +2169,28 @@ k — коефіцієнт заповнення, для гексагональн
       topTurns: res.occ.topTurns,
       topLength: res.occ.topLength,
       usedMM: res.usedMM,
-      tWall: res.eff.tWall
+      tWall: res.eff.tWall,
+      drawW: drawW,
+      coneW: coneW,
+      cone: coneS
     };
 
+    if (coneS) {
+      var cdx = x0 + drawW;
+      svg.appendChild(svgEl("path", {
+        d: "M " + cdx + " " + (dy - 4) + " V " + (dy + 4) + " M " + cdx + " " + dy + " H " + (cdx + coneW) +
+           " M " + (cdx + coneW) + " " + (dy - 4) + " V " + (dy + 4),
+        class: "svg-dimline"
+      }));
+      var ct = svgEl("text", { x: cdx + coneW / 2, y: dy + 15, class: "svg-label dim", "text-anchor": "middle" });
+      ct.textContent = fmtAuto(coneS.height);
+      svg.appendChild(ct);
+    }
+
     var t2 = svgEl("text", { x: x0 + drawW / 2, y: dy + 30, class: "svg-label dim", "text-anchor": "middle" });
-    t2.textContent = fmtInt(res.cap.shape.turns) + " витків у шарі · " + fmtInt(res.occ.layers) + " " + plural(res.occ.layers, "шар", "шари", "шарів");
+    var firstTurns = turnsInLayer(res.cap.shape, 1);
+    t2.textContent = fmtInt(firstTurns) + " витків у першому шарі · " + fmtInt(res.occ.layers) + " " +
+      plural(res.occ.layers, "шар", "шари", "шарів");
     svg.appendChild(t2);
   }
 
@@ -1653,7 +2210,8 @@ k — коефіцієнт заповнення, для гексагональн
   function matchPreset() {
     for (var i = 0; i < PRESETS.length; i++) {
       var pr = PRESETS[i];
-      if (pr.d != null && Math.abs(pr.d - state.dFiber) < 1e-9 && Math.abs(pr.r - state.rBend) < 1e-9) {
+      if (pr.d != null && Math.abs(pr.d - state.dFiber) < 1e-9 && Math.abs(pr.r - state.rBend) < 1e-9 &&
+          Math.abs(pr.rho - state.density) < 1e-9) {
         state.preset = pr.id;
         return;
       }
@@ -1667,6 +2225,7 @@ k — коефіцієнт заповнення, для гексагональн
     renderInputs(res);
     renderHero(res);
     renderMsgs(res);
+    renderConeInputs(res);
     renderCompare(res);
     renderLayers(res);
     renderRadial(res);
@@ -1686,6 +2245,8 @@ k — коефіцієнт заповнення, для гексагональн
     var el = els[key];
     el.addEventListener("input", function () {
       if (GEOM_KEYS.indexOf(key) >= 0) setTargetFromEdit(key);
+      if (key === "coneHalf" && state.coneSolve === "angle") state.coneSolve = "h";
+      if (key === "coneH" && state.coneSolve === "h") state.coneSolve = "angle";
       var v = parseNum(el.value);
       state[key] = v; // NaN when the field is empty or not a number — compute() reports it
       if (isFinite(v)) manual[key] = v;
@@ -1702,6 +2263,8 @@ k — коефіцієнт заповнення, для гексагональн
       var next = Math.round((cur + (ev.key === "ArrowUp" ? stepv : -stepv)) * 1e6) / 1e6;
       if (next < 0) next = 0;
       if (GEOM_KEYS.indexOf(key) >= 0) setTargetFromEdit(key);
+      if (key === "coneHalf" && state.coneSolve === "angle") state.coneSolve = "h";
+      if (key === "coneH" && state.coneSolve === "h") state.coneSolve = "angle";
       state[key] = next;
       manual[key] = next;
       el.value = String(next);
@@ -1724,8 +2287,15 @@ k — коефіцієнт заповнення, для гексагональн
     L.push("Зазори: радіальний " + fmtAuto(r.eff.gapR) + " мм, торцевий " + fmtAuto(r.eff.gapA) + " мм");
     L.push("");
     L.push("Довжина волокна: " + fmtAuto(r.km) + " км");
-    L.push("Шарів: " + fmtInt(r.occ.layers) + ", витків: " + fmtInt(r.occ.turns) + " (" + fmtInt(r.cap.shape.turns) + " на шар)");
+    var firstW = turnsInLayer(r.cap.shape, 1), lastW = turnsInLayer(r.cap.shape, r.occ.layers);
+    L.push("Шарів: " + fmtInt(r.occ.layers) + ", витків: " + fmtInt(r.occ.turns) +
+           (firstW === lastW ? " (" + fmtInt(firstW) + " на шар)"
+                             : " (від " + fmtInt(firstW) + " до " + fmtInt(lastW) + " на шар)"));
     L.push("Ø намотки: " + fmtAuto(2 * r.rWound) + " мм");
+    if (r.cone) {
+      L.push("Конус: кут від осі " + fmtAuto(r.cone.halfDeg) + "°, висота " + fmtAuto(r.cone.height) +
+             " мм, Ø" + fmtAuto(2 * r.cone.rNarrow) + " → Ø" + fmtAuto(2 * r.cone.rWide) + " мм");
+    }
     L.push("Маса волокна: " + fmtAuto(r.massKg) + " кг");
     L.push("Об'ємна звірка: " + fmtAuto(r.volKm) + " км");
     return L.join("\n");
@@ -1744,12 +2314,17 @@ k — коефіцієнт заповнення, для гексагональн
     }
   }
 
-  var STORE_KEY = "fiber-winding-v1";
+  var STORE_KEY = "fiber-winding-v2";
 
   function serialize() {
     var o = {};
     NUM_KEYS.forEach(function (k) { o[k] = state[k]; });
     o.packing = state.packing;
+    o.coneOn = state.coneOn ? 1 : 0;
+    o.coneSolve = state.coneSolve;
+    var man = [];
+    GEOM_KEYS.forEach(function (k) { if (isFinite(manual[k])) man.push(k + ":" + manual[k]); });
+    if (man.length) o.manual = man.join(",");
     o.preset = state.preset;
     o.target = state.target;
     return o;
@@ -1773,6 +2348,15 @@ k — коефіцієнт заповнення, для гексагональн
       if (isFinite(v) && v >= 0) { state[k] = v; touched = true; }
     });
     if (obj.packing === "hex" || obj.packing === "stack") { state.packing = obj.packing; touched = true; }
+    if (obj.coneOn !== undefined) { state.coneOn = String(obj.coneOn) === "1" || obj.coneOn === true; touched = true; }
+    if (obj.coneSolve === "h" || obj.coneSolve === "angle") { state.coneSolve = obj.coneSolve; touched = true; }
+    if (obj.manual) {
+      String(obj.manual).split(",").forEach(function (pair) {
+        var kv = pair.split(":");
+        var v = parseNum(kv[1]);
+        if (kv.length === 2 && GEOM_KEYS.indexOf(kv[0]) >= 0 && isFinite(v)) manual[kv[0]] = v;
+      });
+    }
     if (GEOM_KEYS.indexOf(obj.target) >= 0) { state.target = obj.target; touched = true; }
     if (obj.preset) state.preset = String(obj.preset);
     return touched;
@@ -1796,8 +2380,10 @@ k — коефіцієнт заповнення, для гексагональн
 
   function init() {
     ["dCore", "lCore", "dTubeOut", "fiberKm", "tWall", "gapR", "gapA", "dFiber", "rBend", "density",
+     "coneHalf", "coneH", "coneGap",
      "packing", "preset", "hero", "msgs", "compare", "layerRows", "layerNote", "svgRadial", "svgAxial",
-     "radialLegend", "radialTip", "axialTip", "targetHint", "viewHint", "btnCopy", "btnLink", "btnReset"].forEach(function (id) {
+     "radialLegend", "radialTip", "axialTip", "coneOn", "conePanelBody", "coneDerived",
+     "targetHint", "viewHint", "btnCopy", "btnLink", "btnReset"].forEach(function (id) {
       els[id] = document.getElementById(id);
     });
 
@@ -1815,12 +2401,21 @@ k — коефіцієнт заповнення, для гексагональн
       if (stored) restored = loadFrom(JSON.parse(stored));
     } catch (e) { /* ignore */ }
     var hash = readHash();
-    if (hash) restored = loadFrom(hash) || restored;
+    if (hash) {
+      // a shared link describes a complete state; local leftovers would distort it
+      manual = {};
+      restored = loadFrom(hash) || restored;
+    }
     if (!restored) matchPreset();
 
     NUM_KEYS.forEach(bindNumber);
     setupRadialHover();
     setupAxialHover();
+
+    els.coneOn.addEventListener("change", function () {
+      state.coneOn = els.coneOn.checked;
+      update();
+    });
 
     els.packing.addEventListener("change", function () {
       state.packing = els.packing.value;
@@ -1831,7 +2426,14 @@ k — коефіцієнт заповнення, для гексагональн
       update();
     });
 
-    Array.prototype.forEach.call(document.querySelectorAll(".solve-btn"), function (btn) {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-cone-solve]"), function (btn) {
+      btn.addEventListener("click", function () {
+        state.coneSolve = btn.getAttribute("data-cone-solve");
+        update();
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll(".solve-btn[data-solve]"), function (btn) {
       btn.addEventListener("click", function () {
         var key = btn.getAttribute("data-solve");
         if (state.target === key) return;
