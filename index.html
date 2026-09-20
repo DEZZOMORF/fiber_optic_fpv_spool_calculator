@@ -1,0 +1,1866 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Намотка оптоволокна</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #eaeef0;
+    --panel: #ffffff;
+    --panel-2: #f3f7f8;
+    --ink: #10242b;
+    --ink-2: #4c656f;
+    --ink-3: #59707a;
+    --line: #d5dee1;
+    --line-strong: #b3c2c7;
+    --accent: #0b6e7f;
+    --accent-2: #128ca1;
+    --accent-soft: #d8edf1;
+    --accent-ink: #ffffff;
+    --warn: #8a5a06;
+    --warn-bg: #fbf0d9;
+    --warn-line: #e3c684;
+    --bad: #ad2b21;
+    --bad-bg: #fbeae8;
+    --bad-line: #eab5af;
+    --good: #1a7a49;
+    --core: #b3c2c7;
+    --tube: #8ea1a8;
+    --fiber: #17a0b8;
+    --shadow: 0 1px 2px rgba(16, 36, 43, .06), 0 8px 24px -16px rgba(16, 36, 43, .4);
+    --radius: 10px;
+    --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b1417;
+      --panel: #111f24;
+      --panel-2: #16262c;
+      --ink: #e2edef;
+      --ink-2: #9cb1b8;
+      --ink-3: #8ba2aa;
+      --line: #21343a;
+      --line-strong: #32484f;
+      --accent: #45c3d6;
+      --accent-2: #6ad4e4;
+      --accent-soft: #10333c;
+      --accent-ink: #04181d;
+      --warn: #efb45d;
+      --warn-bg: #2e2410;
+      --warn-line: #5d4a1d;
+      --bad: #ff8078;
+      --bad-bg: #351a18;
+      --bad-line: #60302c;
+      --good: #4cc98a;
+      --core: #3b535b;
+      --tube: #55707a;
+      --fiber: #45c3d6;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px -18px rgba(0, 0, 0, .9);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0b1417;
+    --panel: #111f24;
+    --panel-2: #16262c;
+    --ink: #e2edef;
+    --ink-2: #9cb1b8;
+    --ink-3: #8ba2aa;
+    --line: #21343a;
+    --line-strong: #32484f;
+    --accent: #45c3d6;
+    --accent-2: #6ad4e4;
+    --accent-soft: #10333c;
+    --accent-ink: #04181d;
+    --warn: #efb45d;
+    --warn-bg: #2e2410;
+    --warn-line: #5d4a1d;
+    --bad: #ff8078;
+    --bad-bg: #351a18;
+    --bad-line: #60302c;
+    --good: #4cc98a;
+    --core: #3b535b;
+    --tube: #55707a;
+    --fiber: #45c3d6;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px -18px rgba(0, 0, 0, .9);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1220px;
+    margin: 0 auto;
+    padding-block: 28px 44px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  header.page { margin-bottom: 22px; }
+
+  h1 {
+    font-size: clamp(24px, 3.4vw, 34px);
+    font-weight: 600;
+    letter-spacing: -.02em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 0;
+    color: var(--ink-2);
+    max-width: 68ch;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .panel + .panel { margin-top: 16px; }
+
+  .panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px 0;
+  }
+
+  .panel-body { padding: 12px 16px 16px; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .hint { font-size: 12px; color: var(--ink-3); }
+
+  /* --- fields --- */
+  .field {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 8px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .field:last-child { border-bottom: 0; padding-bottom: 2px; }
+
+  .field label {
+    grid-column: 1 / -1;
+    font-size: 13px;
+    color: var(--ink-2);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .field label .unit {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  .inputwrap { position: relative; display: flex; }
+
+  input[type="text"], select {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    background: var(--panel-2);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 9px 11px;
+    transition: border-color .12s, box-shadow .12s, background .12s;
+  }
+
+  select {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    font-weight: 400;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+    background-position: calc(100% - 17px) 18px, calc(100% - 12px) 18px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 30px;
+  }
+
+  input[type="text"]:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  input:focus { border-color: var(--accent); }
+
+  .solve-btn {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-3);
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    transition: all .12s;
+  }
+
+  .solve-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  .field.is-target input[type="text"] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .field.is-target .solve-btn {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+    cursor: default;
+  }
+
+  .field.is-bad input[type="text"] { border-color: var(--bad); }
+
+  /* --- results --- */
+  .hero {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .stat {
+    background: var(--panel);
+    padding: 14px 16px;
+  }
+
+  .stat .k {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .stat .v {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+  }
+
+  .stat .v small { font-size: 13px; font-weight: 500; color: var(--ink-2); margin-left: 3px; }
+  .stat.primary { background: var(--accent-soft); }
+  .stat.primary .v { color: var(--accent); }
+  .stat.primary .k { color: var(--accent); opacity: .75; }
+  .stat .sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+
+  @media (max-width: 520px) {
+    .hero { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  .msgs { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+  .msg {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    font-size: 13.5px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--ink-2);
+  }
+
+  .msg b { font-weight: 600; color: var(--ink); }
+  .msg .tag { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; flex: none; padding-top: 2px; }
+  .msg.warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
+  .msg.warn b { color: var(--warn); }
+  .msg.bad { background: var(--bad-bg); border-color: var(--bad-line); color: var(--bad); }
+  .msg.bad b { color: var(--bad); }
+
+  /* --- drawings --- */
+  .views {
+    display: grid;
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 620px) {
+    .views { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .view { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .view svg { width: 100%; height: auto; max-width: 100%; display: block; }
+
+  #svgRadial, #svgAxial { cursor: crosshair; }
+
+  .tip {
+    position: absolute;
+    z-index: 3;
+    pointer-events: none;
+    min-width: 168px;
+    max-width: 230px;
+    padding: 8px 10px;
+    background: var(--panel);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+
+  .tip .tip-h {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 3px;
+  }
+
+  .tip dl { display: grid; grid-template-columns: 1fr auto; gap: 1px 12px; margin: 0; }
+  .tip dt { color: var(--ink-2); }
+  .tip dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  .legend { font-size: 12px; margin: 2px 0 0; }
+  .legend dt { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+
+  .svg-label { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-2); }
+  .svg-label.dim { fill: var(--ink-3); }
+  .svg-dimline { stroke: var(--ink-3); stroke-width: .6; fill: none; }
+
+  /* --- table --- */
+  .tablewrap { overflow-x: auto; max-height: 300px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; }
+
+  table { border-collapse: collapse; width: 100%; font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+
+  th, td { padding: 5px 12px; text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--panel-2);
+    color: var(--ink-3);
+    font-weight: 500;
+    font-size: 10.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+    z-index: 1;
+  }
+
+  tbody tr:nth-child(even) { background: var(--panel-2); }
+  tbody td { color: var(--ink-2); }
+  tbody td:first-child { color: var(--ink); }
+
+  details { border-top: 1px solid var(--line); }
+  details summary {
+    cursor: pointer;
+    padding: 11px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-2);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before {
+    content: "▸";
+    font-size: 10px;
+    color: var(--ink-3);
+    transition: transform .15s;
+  }
+  details[open] summary::before { transform: rotate(90deg); }
+  details .details-body { padding: 0 16px 16px; }
+
+  .formula {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    color: var(--ink-2);
+    margin: 8px 0;
+  }
+
+  .kv { display: grid; grid-template-columns: 1fr auto; gap: 3px 14px; font-size: 13px; }
+  .kv dt { color: var(--ink-2); }
+  .kv dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+
+  /* Inside a two-up group every field keeps its rule, so both columns match;
+     only the group that ends a panel drops the rule under its last row. */
+  .row2 .field { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+  .panel-body > .row2:last-child .field:nth-last-child(-n+2) { border-bottom: 0; padding-bottom: 2px; }
+
+  @media (max-width: 380px) {
+    .row2 { grid-template-columns: 1fr; }
+    .panel-body > .row2:last-child .field:nth-last-child(-n+2) { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+    .panel-body > .row2:last-child .field:last-child { border-bottom: 0; padding-bottom: 2px; }
+  }
+
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+  .btn {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-2);
+    background: var(--panel);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 7px 13px;
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  footer.page { margin-top: 26px; font-size: 12.5px; color: var(--ink-3); max-width: 72ch; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <h1>Намотка оптоволокна</h1>
+    <p class="lede">Гільза, тубус і довжина волокна пов'язані однією геометрією. Задайте будь-які три величини — четверта порахується. Натисніть <b>=</b> біля поля, щоб зробити шуканим саме його.</p>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <section class="panel">
+        <div class="panel-head">
+          <span class="eyebrow">Геометрія</span>
+          <span class="hint" id="targetHint">шукаємо: довжину</span>
+        </div>
+        <div class="panel-body">
+          <div class="field" data-field="dCore">
+            <label for="dCore">Діаметр гільзи <span class="unit">мм</span></label>
+            <div class="inputwrap"><input type="text" inputmode="decimal" id="dCore" autocomplete="off" spellcheck="false"></div>
+            <button class="solve-btn" type="button" data-solve="dCore" title="Обчислювати діаметр гільзи" aria-label="Обчислювати діаметр гільзи">=</button>
+          </div>
+          <div class="field" data-field="lCore">
+            <label for="lCore">Довжина гільзи <span class="unit">мм</span></label>
+            <div class="inputwrap"><input type="text" inputmode="decimal" id="lCore" autocomplete="off" spellcheck="false"></div>
+            <button class="solve-btn" type="button" data-solve="lCore" title="Обчислювати довжину гільзи" aria-label="Обчислювати довжину гільзи">=</button>
+          </div>
+          <div class="field" data-field="dTubeOut">
+            <label for="dTubeOut">Зовнішній діаметр тубуса <span class="unit">мм</span></label>
+            <div class="inputwrap"><input type="text" inputmode="decimal" id="dTubeOut" autocomplete="off" spellcheck="false"></div>
+            <button class="solve-btn" type="button" data-solve="dTubeOut" title="Обчислювати діаметр тубуса" aria-label="Обчислювати діаметр тубуса">=</button>
+          </div>
+          <div class="field" data-field="fiberKm">
+            <label for="fiberKm">Довжина оптоволокна <span class="unit">км</span></label>
+            <div class="inputwrap"><input type="text" inputmode="decimal" id="fiberKm" autocomplete="off" spellcheck="false"></div>
+            <button class="solve-btn" type="button" data-solve="fiberKm" title="Обчислювати довжину волокна" aria-label="Обчислювати довжину волокна">=</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><span class="eyebrow">Волокно</span></div>
+        <div class="panel-body">
+          <div class="field">
+            <label for="preset">Тип</label>
+            <div class="inputwrap" style="grid-column: 1 / -1;"><select id="preset"></select></div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="dFiber">Діаметр <span class="unit">мм</span></label>
+              <div class="inputwrap" style="grid-column: 1 / -1;"><input type="text" inputmode="decimal" id="dFiber" autocomplete="off" spellcheck="false"></div>
+            </div>
+            <div class="field">
+              <label for="rBend">Мін. радіус згину <span class="unit">мм</span></label>
+              <div class="inputwrap" style="grid-column: 1 / -1;"><input type="text" inputmode="decimal" id="rBend" autocomplete="off" spellcheck="false"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="packing">Укладка</label>
+            <div class="inputwrap" style="grid-column: 1 / -1;">
+              <select id="packing">
+                <option value="hex">Гексагональна — шари вкладаються в западини (крок 0.866·d)</option>
+                <option value="stack">Рядна — виток над витком (крок 1.0·d)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><span class="eyebrow">Тубус і допуски</span></div>
+        <div class="panel-body">
+          <div class="row2">
+            <div class="field">
+              <label for="tWall">Стінка тубуса <span class="unit">мм</span></label>
+              <div class="inputwrap" style="grid-column: 1 / -1;"><input type="text" inputmode="decimal" id="tWall" autocomplete="off" spellcheck="false"></div>
+            </div>
+            <div class="field">
+              <label for="gapR">Радіальний зазор <span class="unit">мм</span></label>
+              <div class="inputwrap" style="grid-column: 1 / -1;"><input type="text" inputmode="decimal" id="gapR" autocomplete="off" spellcheck="false"></div>
+            </div>
+            <div class="field">
+              <label for="gapA">Відступ з торців <span class="unit">мм</span></label>
+              <div class="inputwrap" style="grid-column: 1 / -1;"><input type="text" inputmode="decimal" id="gapA" autocomplete="off" spellcheck="false"></div>
+            </div>
+            <div class="field">
+              <label for="density">Густина волокна <span class="unit">г/см³</span></label>
+              <div class="inputwrap" style="grid-column: 1 / -1;"><input type="text" inputmode="decimal" id="density" autocomplete="off" spellcheck="false"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <main>
+      <div class="hero" id="hero" aria-live="polite"></div>
+      <div class="msgs" id="msgs" role="status" aria-live="polite"></div>
+
+      <section class="panel" style="margin-top: 16px;">
+        <div class="panel-head">
+          <span class="eyebrow">Переріз</span>
+          <span class="hint" id="viewHint"></span>
+        </div>
+        <div class="panel-body">
+          <div class="views">
+            <div class="view">
+              <svg id="svgRadial" viewBox="0 0 300 240" role="img" aria-label="Поперечний переріз намотки"></svg>
+              <div class="tip" id="radialTip" hidden></div>
+              <dl class="kv legend" id="radialLegend"></dl>
+              <span class="hint">Поперек осі — наведіть на намотку, щоб побачити шар</span>
+            </div>
+            <div class="view">
+              <svg id="svgAxial" viewBox="0 0 420 240" role="img" aria-label="Поздовжній переріз намотки"></svg>
+              <div class="tip" id="axialTip" hidden></div>
+              <span class="hint">Уздовж осі — наведіть, щоб побачити шар і виток</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top: 16px;">
+        <div class="panel-head">
+          <span class="eyebrow">Звірка моделей</span>
+        </div>
+        <div class="panel-body">
+          <dl class="kv" id="compare"></dl>
+        </div>
+        <details>
+          <summary>Розкладка по шарах</summary>
+          <div class="details-body">
+            <div class="tablewrap">
+              <table>
+                <thead>
+                  <tr><th>Шар</th><th>Ø, мм</th><th>Витків</th><th>Довжина, м</th><th>Разом, км</th></tr>
+                </thead>
+                <tbody id="layerRows"></tbody>
+              </table>
+            </div>
+            <p class="hint" id="layerNote" style="margin: 8px 0 0;"></p>
+          </div>
+        </details>
+        <details>
+          <summary>Як це рахується</summary>
+          <div class="details-body">
+            <p style="margin: 0 0 4px; color: var(--ink-2); font-size: 13.5px;">Пошарова модель — основна. Витків у шарі та радіус кожного шару:</p>
+            <div class="formula">N = ⌊(L − 2·відступ) / d_волокна⌋
+r_i = d_гільзи/2 + d_волокна/2 + (i−1)·крок
+крок = 0.866·d_волокна (гекс) або d_волокна (рядна)
+Довжина шару i = N_i · 2π · r_i</div>
+            <p style="margin: 10px 0 4px; color: var(--ink-2); font-size: 13.5px;">При гексагональній укладці парні шари сідають у западини непарних, тож містять на один виток менше. Об'ємна модель — швидка звірка через площу кільця:</p>
+            <div class="formula">ℓ = k · L · (D_намотки² − d_гільзи²) / d_волокна²
+k — коефіцієнт заповнення, для гексагональної решітки π/(2√3) ≈ 0.9069</div>
+            <p style="margin: 10px 0 0; color: var(--ink-2); font-size: 13.5px;">Крок спіралі вздовж осі ігнорується: він подовжує виток у (1 + (d/πD)²)^½ разів — для Ø60 мм і волокна 250 мкм це близько +0,00009 %.</p>
+          </div>
+        </details>
+      </section>
+
+      <div class="toolbar">
+        <button class="btn" type="button" id="btnCopy">Копіювати зведення</button>
+        <button class="btn" type="button" id="btnLink">Скопіювати посилання</button>
+        <button class="btn" type="button" id="btnReset">Скинути</button>
+      </div>
+    </main>
+  </div>
+
+  <footer class="page">
+    Модель описує рівномірну укладку без перехресних намоток і без натягу, що підтискає нижні шари. На реальному верстаті очікуйте на 3–8 % менше через нерівність країв та дрейф укладальника. Радіальний зазор закладено як запас на биття намотки.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var PRESETS = [
+    { id: "g652-250", name: "Волокно 250 мкм, G.652D", d: 0.25, r: 30, rho: 1.45 },
+    { id: "g657-250", name: "Волокно 250 мкм, G.657.A2 (bend-insensitive)", d: 0.25, r: 7.5, rho: 1.45 },
+    { id: "f200", name: "Волокно 200 мкм (ущільнене)", d: 0.2, r: 25, rho: 1.45 },
+    { id: "buf900", name: "Tight buffer 900 мкм", d: 0.9, r: 15, rho: 1.35 },
+    { id: "pc2", name: "Патч-корд 2.0 мм", d: 2.0, r: 20, rho: 1.3 },
+    { id: "pc3", name: "Патч-корд 3.0 мм", d: 3.0, r: 30, rho: 1.3 },
+    { id: "drop", name: "FTTH drop 2×5 мм (по 5 мм)", d: 5.0, r: 30, rho: 1.15 },
+    { id: "custom", name: "Свій діаметр", d: null, r: null, rho: null }
+  ];
+
+  var DEFAULTS = {
+    dCore: 60, lCore: 200, dTubeOut: 160, fiberKm: 0,
+    tWall: 3, gapR: 1, gapA: 0,
+    dFiber: 0.25, packing: "hex", rBend: 30, density: 1.45,
+    preset: "g652-250", target: "fiberKm"
+  };
+
+  var GEOM_KEYS = ["dCore", "lCore", "dTubeOut", "fiberKm"];
+  var NUM_KEYS = ["dCore", "lCore", "dTubeOut", "fiberKm", "tWall", "gapR", "gapA", "dFiber", "rBend", "density"];
+  var HEX_PITCH = Math.sqrt(3) / 2;
+  var MAX_LAYERS = 2000000;
+  var HEX_FILL = Math.PI / (2 * Math.sqrt(3));
+  var SQ_FILL = Math.PI / 4;
+
+  var state = {};
+  var lastResult = null;
+  var manual = {};
+  var radialView = null;
+  var radialHighlight = null;
+  var axialView = null;
+  var axialHighlight = null;
+
+  // ---------- number helpers ----------
+
+  function parseNum(raw) {
+    if (typeof raw === "number") return raw;
+    if (raw == null) return NaN;
+    var s = String(raw).replace(/ |\s/g, "").replace(",", ".");
+    if (s === "") return NaN;
+    var v = Number(s);
+    return isFinite(v) ? v : NaN;
+  }
+
+  var nf = new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 3 });
+
+  function fmt(v, digits) {
+    if (!isFinite(v)) return "—";
+    var d = digits == null ? 2 : digits;
+    return new Intl.NumberFormat("uk-UA", { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
+  }
+
+  function fmtInt(v) {
+    if (!isFinite(v)) return "—";
+    return nf.format(Math.round(v));
+  }
+
+  // Ukrainian plural agreement: 1 шар, 2 шари, 5 шарів.
+  function plural(n, one, few, many) {
+    var a = Math.abs(Math.round(n)) % 100;
+    if (a >= 11 && a <= 14) return many;
+    var b = a % 10;
+    if (b === 1) return one;
+    if (b >= 2 && b <= 4) return few;
+    return many;
+  }
+
+  function fmtAuto(v) {
+    if (!isFinite(v)) return "—";
+    var a = Math.abs(v);
+    if (a >= 1000) return fmt(v, 0);
+    if (a >= 100) return fmt(v, 1);
+    if (a >= 1) return fmt(v, 2);
+    if (a >= 0.01) return fmt(v, 3);
+    return fmt(v, 4);
+  }
+
+  // ---------- model ----------
+
+  function geometry(p) {
+    var f = p.dFiber;
+    var dTubeIn = p.dTubeOut - 2 * p.tWall;
+    return {
+      f: f,
+      pitch: p.packing === "hex" ? f * HEX_PITCH : f,
+      rCore: p.dCore / 2,
+      dTubeIn: dTubeIn,
+      rMax: dTubeIn / 2 - p.gapR,
+      usableW: p.lCore - 2 * p.gapA
+    };
+  }
+
+  // Turns per layer and layer count for the current geometry.
+  function capacityShape(p) {
+    var g = geometry(p);
+    if (!(g.f > 0) || !isFinite(g.f) || !isFinite(g.rMax) || !isFinite(g.usableW)) return null;
+    var turns = Math.floor((g.usableW + 1e-9) / g.f);
+    if (!(turns >= 1)) return null;
+    // A single turn per layer leaves no valleys, so nesting is impossible:
+    // the winding is row-on-row whatever the user picked.
+    var packing = p.packing === "hex" && turns >= 2 ? "hex" : "stack";
+    var pitch = packing === "hex" ? g.f * HEX_PITCH : g.f;
+    var span = g.rMax - g.rCore - g.f; // room for centres beyond the first layer
+    if (span < -1e-9) return null;
+    var layers = Math.floor(span / pitch + 1e-9) + 1;
+    if (!(layers >= 1) || !isFinite(layers)) return null;
+    if (layers > MAX_LAYERS) return { overflow: true, layers: layers };
+    g.pitch = pitch;
+    return { g: g, turns: turns, layers: layers, a: g.rCore + g.f / 2, packing: packing, pitch: pitch };
+  }
+
+  // Closed-form sum of layer lengths, in mm, for the first n layers.
+  function lengthOfLayers(shape, n, packing) {
+    if (!shape || shape.overflow || n <= 0) return 0;
+    packing = shape.packing;
+    var a = shape.a, p = shape.pitch, N = shape.turns;
+    var sumAll = n * a + p * n * (n - 1) / 2;
+    var evenAdj = 0;
+    if (packing === "hex") {
+      var m = Math.floor(n / 2);
+      evenAdj = m * a + p * m * m;
+    }
+    return 2 * Math.PI * (N * sumAll - evenAdj);
+  }
+
+  function turnsOfLayers(shape, n, packing) {
+    if (!shape || shape.overflow || n <= 0) return 0;
+    var total = shape.turns * n;
+    if (shape.packing === "hex") total -= Math.floor(n / 2);
+    return total;
+  }
+
+  // Full capacity of the current geometry.
+  function capacity(p) {
+    var shape = capacityShape(p);
+    if (!shape || shape.overflow) {
+      return { ok: false, overflow: !!(shape && shape.overflow), layers: shape ? shape.layers : 0,
+               mm: 0, turns: 0, rWound: p.dCore / 2, shape: null };
+    }
+    var n = shape.layers;
+    var mm = lengthOfLayers(shape, n, shape.packing);
+    if (!isFinite(mm)) {
+      return { ok: false, overflow: false, mm: 0, layers: 0, turns: 0, rWound: p.dCore / 2, shape: null };
+    }
+    return {
+      ok: true,
+      shape: shape,
+      layers: n,
+      turns: turnsOfLayers(shape, n, shape.packing),
+      mm: mm,
+      rWound: shape.a + (n - 1) * shape.pitch + shape.g.f / 2
+    };
+  }
+
+  // Turns in layer i, counting from 1.
+  function turnsInLayer(shape, i) {
+    return shape.packing === "hex" && i % 2 === 0 ? Math.max(shape.turns - 1, 0) : shape.turns;
+  }
+
+  // How many layers a given length occupies, and how full the topmost one is.
+  // Binary search, so a million-layer winding costs ~20 steps instead of a million.
+  function occupancy(p, targetMM) {
+    var shape = capacityShape(p);
+    if (!shape || shape.overflow) return { layers: 0, rWound: p.dCore / 2, turns: 0, shape: null };
+    if (!(targetMM > 0)) {
+      return { layers: 0, rWound: shape.g.rCore, turns: 0, shape: shape, partial: null };
+    }
+    // smallest n with lengthOfLayers(n) >= targetMM
+    var lo = 1, hi = shape.layers, used = shape.layers;
+    while (lo <= hi) {
+      var mid = Math.floor((lo + hi) / 2);
+      if (lengthOfLayers(shape, mid, shape.packing) >= targetMM - 1e-6) { used = mid; hi = mid - 1; }
+      else lo = mid + 1;
+    }
+    var below = lengthOfLayers(shape, used - 1, shape.packing);
+    var rTop = shape.a + (used - 1) * shape.pitch;
+    var fullTurns = turnsInLayer(shape, used);
+    var remain = Math.max(targetMM - below, 0);
+    var perTurn = 2 * Math.PI * rTop;
+    var topTurns = perTurn > 0 ? Math.min(remain / perTurn, fullTurns) : fullTurns;
+    return {
+      layers: used,
+      shape: shape,
+      // the topmost layer is only as full as the fibre reaching it
+      turns: turnsOfLayers(shape, used - 1, shape.packing) + Math.ceil(topTurns - 1e-9),
+      topTurns: topTurns,
+      topLength: Math.min(remain, fullTurns * perTurn),
+      partial: topTurns < fullTurns - 1e-9,
+      rWound: rTop + shape.g.f / 2
+    };
+  }
+
+  function volumeLength(p, rWound) {
+    var g = geometry(p);
+    var dw = 2 * rWound;
+    if (!(dw > p.dCore) || !(g.usableW > 0) || !(g.f > 0)) return 0;
+    var k = p.packing === "hex" ? HEX_FILL : SQ_FILL;
+    return k * g.usableW * (dw * dw - p.dCore * p.dCore) / (g.f * g.f);
+  }
+
+  // ---------- inverse solving ----------
+
+  // Capacity as a function of one geometric key, in mm.
+  function capacityWith(p, key, value) {
+    var q = {};
+    for (var k in p) if (Object.prototype.hasOwnProperty.call(p, k)) q[k] = p[k];
+    q[key] = value;
+    return capacity(q).mm;
+  }
+
+  // Capacity steps with layer count, so scan coarsely then bisect the step edge.
+  function solveGeom(p, key, targetMM, lo, hi, increasing) {
+    if (!(targetMM > 0)) return null;
+    var STEPS = 480, i, x, v;
+    var prevX = lo, prevV = capacityWith(p, key, lo);
+    if (increasing && prevV >= targetMM) return lo;
+
+    var loEdge = null, hiEdge = null;
+    for (i = 1; i <= STEPS; i++) {
+      x = lo + (hi - lo) * i / STEPS;
+      v = capacityWith(p, key, x);
+      if (increasing) {
+        if (prevV < targetMM && v >= targetMM) { loEdge = prevX; hiEdge = x; break; }
+      } else {
+        if (prevV >= targetMM && v < targetMM) { loEdge = prevX; hiEdge = x; break; }
+      }
+      prevX = x; prevV = v;
+    }
+    if (loEdge === null) {
+      if (!increasing && prevV >= targetMM) return hi; // still fits at the far end
+      return null;
+    }
+    for (i = 0; i < 70; i++) {
+      var mid = (loEdge + hiEdge) / 2;
+      var mv = capacityWith(p, key, mid);
+      if (increasing) {
+        if (mv >= targetMM) hiEdge = mid; else loEdge = mid;
+      } else {
+        if (mv >= targetMM) loEdge = mid; else hiEdge = mid;
+      }
+    }
+    return increasing ? hiEdge : loEdge;
+  }
+
+  // Capacity is NOT monotonic in the hub diameter: a fatter hub lengthens every
+  // turn but eventually costs a whole layer, so the curve is saw-toothed and a
+  // bisection can miss valid hubs entirely. Solve it structurally instead.
+  //
+  // A hub radius yields exactly n layers while it sits in the window
+  //   (rMax - f - n*pitch, rMax - f - (n-1)*pitch]
+  // and within one window the capacity grows with the radius, peaking at the top
+  // of the window. Windows shrink as n grows, so the first n whose peak clears
+  // the target carries the largest hub that still fits the fibre.
+  function solveCore(p, targetMM) {
+    var f = p.dFiber;
+    var rMax = (p.dTubeOut - 2 * p.tWall) / 2 - p.gapR;
+    var usableW = p.lCore - 2 * p.gapA;
+    if (!(f > 0) || !isFinite(rMax) || !isFinite(usableW) || !(targetMM > 0)) return null;
+    var turns = Math.floor((usableW + 1e-9) / f);
+    if (!(turns >= 1)) return null;
+    var packing = p.packing === "hex" && turns >= 2 ? "hex" : "stack";
+    var pitch = packing === "hex" ? f * HEX_PITCH : f;
+
+    var nMax = Math.floor((rMax - f / 2 - f) / pitch + 1e-9) + 1;
+    if (!(nMax >= 1) || !isFinite(nMax) || nMax > MAX_LAYERS) return null;
+
+    for (var n = 1; n <= nMax; n++) {
+      var rHi = rMax - f - (n - 1) * pitch; // largest hub radius still giving n layers
+      if (!(rHi > 0)) break;
+      var m = packing === "hex" ? Math.floor(n / 2) : 0;
+      var peak = 2 * Math.PI * ((rHi + f / 2) * (turns * n - m) +
+                                pitch * (turns * n * (n - 1) / 2 - m * m));
+      if (!isFinite(peak)) return null;
+      if (peak >= targetMM - 1e-6) return 2 * rHi;
+    }
+    return null;
+  }
+
+  function roundTo(v, step, up) {
+    var n = v / step;
+    return (up ? Math.ceil(n - 1e-9) : Math.floor(n + 1e-9)) * step;
+  }
+
+  // ---------- compute ----------
+
+  function compute() {
+    var p = state;
+    var msgs = [];
+    var target = p.target;
+    var out = { target: target, msgs: msgs, solved: null, ok: false };
+
+    // Every field must hold a real, finite, in-range number before anything is
+    // computed — otherwise a cleared or nonsense field silently keeps the old value.
+    var CHECKS = [
+      { k: "dFiber", label: "Діаметр волокна", positive: true },
+      { k: "lCore", label: "Довжина гільзи", positive: true },
+      { k: "dCore", label: "Діаметр гільзи", positive: true },
+      { k: "dTubeOut", label: "Зовнішній діаметр тубуса", positive: true },
+      { k: "tWall", label: "Стінка тубуса", positive: false },
+      { k: "gapR", label: "Радіальний зазор", positive: false },
+      { k: "gapA", label: "Відступ з торців", positive: false },
+      { k: "density", label: "Густина волокна", positive: true },
+      { k: "rBend", label: "Мінімальний радіус згину", positive: false }
+    ];
+    for (var ci = 0; ci < CHECKS.length; ci++) {
+      var c = CHECKS[ci];
+      if (c.k === target) continue; // this one is the answer, not an input
+      var val = p[c.k];
+      if (!isFinite(val)) {
+        msgs.push({ level: "bad", tag: "Ввід", text: c.label + " — порожнє поле або не число." });
+        return out;
+      }
+      if (val < 0) {
+        msgs.push({ level: "bad", tag: "Ввід", text: c.label + " не може бути від'ємним." });
+        return out;
+      }
+      if (c.positive && val === 0) {
+        msgs.push({ level: "bad", tag: "Ввід", text: c.label + " має бути більшим за нуль." });
+        return out;
+      }
+      if (val > 1e7) {
+        msgs.push({ level: "bad", tag: "Ввід", text: c.label + " виходить за розумні межі (понад 10 м)." });
+        return out;
+      }
+    }
+    if (target !== "fiberKm" && (!isFinite(p.fiberKm) || p.fiberKm < 0 || p.fiberKm > 1e6)) {
+      msgs.push({ level: "bad", tag: "Ввід", text: "Довжина оптоволокна — порожнє поле, від'ємне або надто велике число." });
+      return out;
+    }
+    if (target !== "dTubeOut" && p.dTubeOut - 2 * p.tWall <= 0) {
+      msgs.push({
+        level: "bad", tag: "Геометрія",
+        text: "Стінки завтовшки " + fmtAuto(p.tWall) + " мм змикаються: у тубусі Ø" + fmtAuto(p.dTubeOut) + " мм не лишається просвіту."
+      });
+      return out;
+    }
+    // When the hub diameter is what we are solving for, its stale value must not veto the run.
+    if (target !== "dTubeOut" && target !== "dCore" && p.dTubeOut - 2 * p.tWall <= p.dCore) {
+      msgs.push({
+        level: "bad", tag: "Геометрія",
+        text: "Внутрішній діаметр тубуса (" + fmtAuto(p.dTubeOut - 2 * p.tWall) + " мм) не більший за діаметр гільзи. Місця для намотки немає."
+      });
+      return out;
+    }
+
+    var targetMM = p.fiberKm * 1e6;
+
+    if (target === "fiberKm") {
+      var cap = capacity(p);
+      if (!cap.ok) {
+        msgs.push(cap.overflow
+          ? { level: "bad", tag: "Масштаб", text: "Така комбінація дає " + fmtInt(cap.layers) + " шарів — це поза межами фізично осмисленої намотки. Збільште діаметр волокна або зменште тубус." }
+          : { level: "bad", tag: "Геометрія", text: "У цей проміжок не вміщується жоден повний шар волокна. Збільште тубус, зменште гільзу або зазор." });
+        return out;
+      }
+      out.solved = cap.mm / 1e6;
+      out.cap = cap;
+      out.usedMM = cap.mm;
+    } else {
+      if (!(p.fiberKm > 0)) {
+        msgs.push({ level: "bad", tag: "Ввід", text: "Задайте довжину волокна, більшу за нуль." });
+        return out;
+      }
+      var solvedValue = null;
+      if (target === "dTubeOut") {
+        var loT = p.dCore + 2 * p.dFiber + 2 * p.gapR + 2 * p.tWall;
+        solvedValue = solveGeom(p, "dTubeOut", targetMM, loT, Math.max(loT * 4, loT + 4000), true);
+        if (solvedValue !== null) solvedValue = roundTo(solvedValue, 0.01, true);
+      } else if (target === "lCore") {
+        var loL = p.dFiber + 2 * p.gapA;
+        solvedValue = solveGeom(p, "lCore", targetMM, loL, Math.max(loL * 4, loL + 20000), true);
+        if (solvedValue !== null) solvedValue = roundTo(solvedValue, 0.01, true);
+      } else if (target === "dCore") {
+        var hiC = p.dTubeOut - 2 * p.tWall - 2 * p.gapR - 2 * p.dFiber;
+        if (!(hiC > 0)) {
+          msgs.push({ level: "bad", tag: "Геометрія", text: "Тубус замалий: навіть без гільзи в нього не лягає шар волокна." });
+          return out;
+        }
+        solvedValue = solveCore(p, targetMM);
+        if (solvedValue !== null) {
+          solvedValue = Math.min(roundTo(solvedValue, 0.01, false), hiC);
+          // rounding must never drop below the requested length
+          var guard = 0;
+          while (guard < 64 && solvedValue > 0.01 && capacityWith(p, "dCore", solvedValue) < targetMM - 1e-6) {
+            solvedValue = roundTo(solvedValue - 0.01, 0.01, false);
+            guard++;
+          }
+          if (!(solvedValue > 0) || capacityWith(p, "dCore", solvedValue) < targetMM - 1e-6) solvedValue = null;
+        }
+      }
+
+      if (solvedValue !== null && isFinite(solvedValue) && target !== "dCore") {
+        // rounding up must still clear the target for the monotone cases
+        var guardUp = 0;
+        while (guardUp < 64 && capacityWith(p, target, solvedValue) < targetMM - 1e-6) {
+          solvedValue = roundTo(solvedValue + 0.01, 0.01, true);
+          guardUp++;
+        }
+        if (capacityWith(p, target, solvedValue) < targetMM - 1e-6) solvedValue = null;
+      }
+
+      if (solvedValue === null || !(solvedValue > 0) || !isFinite(solvedValue)) {
+        msgs.push({
+          level: "bad", tag: "Немає розв'язку",
+          text: target === "dCore"
+            ? "Ця довжина не вміщується в заданий тубус за жодного діаметра гільзи. Збільште тубус або довжину гільзи."
+            : "Не вдалося підібрати значення в розумних межах. Перевірте інші параметри — ймовірно, потрібен надто великий розмір."
+        });
+        return out;
+      }
+
+      out.solved = solvedValue;
+      var q = {};
+      for (var k in p) if (Object.prototype.hasOwnProperty.call(p, k)) q[k] = p[k];
+      q[target] = solvedValue;
+      out.effective = q;
+      out.cap = capacity(q);
+      out.usedMM = targetMM;
+      if (!out.cap.ok) {
+        msgs.push({ level: "bad", tag: "Немає розв'язку", text: "Підібране значення не дає придатної намотки. Перевірте інші параметри." });
+        return out;
+      }
+    }
+
+    var eff = out.effective || p;
+    var cap2 = out.cap;
+    if (!cap2 || !cap2.ok) {
+      msgs.push({ level: "bad", tag: "Геометрія", text: "У цю геометрію не вміщується жоден повний шар волокна." });
+      return out;
+    }
+
+    var occ = occupancy(eff, out.usedMM);
+    var g = geometry(eff);
+    var rWound = occ.layers > 0 ? occ.rWound : g.rCore;
+    var volMM = volumeLength(eff, rWound);
+    var fiberVolMM3 = Math.PI / 4 * eff.dFiber * eff.dFiber * out.usedMM;
+    var annulusMM3 = Math.PI / 4 * (4 * rWound * rWound - eff.dCore * eff.dCore) * g.usableW;
+    var massKg = fiberVolMM3 * 1e-3 * eff.density / 1000;
+
+    out.ok = true;
+    out.eff = eff;
+    out.g = g;
+    out.occ = occ;
+    out.rWound = rWound;
+    out.km = out.usedMM / 1e6;
+    out.capKm = cap2.mm / 1e6;
+    out.volKm = volMM / 1e6;
+    out.massKg = massKg;
+    out.fillActual = annulusMM3 > 0 ? fiberVolMM3 / annulusMM3 : 0;
+    out.headroomKm = out.capKm - out.km;
+
+    // Advisories.
+    if (eff.dCore / 2 < eff.rBend - 1e-9) {
+      msgs.push({
+        level: "bad", tag: "Згин",
+        text: "Радіус гільзи " + fmtAuto(eff.dCore / 2) + " мм менший за мінімальний радіус згину волокна " + fmtAuto(eff.rBend) + " мм. Нижні витки працюватимуть із втратами на макрозгині, а з часом — з ризиком обриву."
+      });
+    } else if (eff.dCore / 2 < eff.rBend * 1.5) {
+      msgs.push({
+        level: "warn", tag: "Згин",
+        text: "Радіус гільзи лише " + fmt(eff.dCore / 2 / eff.rBend, 2) + "× від мінімального радіуса згину. Для довготривалого зберігання беруть запас ≥1,5×."
+      });
+    }
+    if (out.headroomKm > 0.0005 && target !== "fiberKm") {
+      msgs.push({
+        level: "info", tag: "Запас",
+        text: "Розмір округлено до цілого числа шарів, тож фактична ємність " + fmtAuto(out.capKm) + " км — на " + fmtAuto(out.headroomKm) + " км більше за потрібне."
+      });
+    }
+    var lastLayerFrac = g.usableW / eff.dFiber - Math.floor(g.usableW / eff.dFiber);
+    if (lastLayerFrac > 0.15 && lastLayerFrac < 0.999) {
+      msgs.push({
+        level: "info", tag: "Ширина",
+        text: "Уздовж осі залишається " + fmtAuto(lastLayerFrac * eff.dFiber) + " мм незаповненого місця в кожному шарі — ширина гільзи не кратна діаметру волокна."
+      });
+    }
+    var diffPct = out.volKm > 0 ? (out.km - out.volKm) / out.volKm * 100 : 0;
+    if (Math.abs(diffPct) > 12) {
+      msgs.push({
+        level: "warn", tag: "Звірка",
+        text: "Пошарова і об'ємна моделі розходяться на " + fmt(Math.abs(diffPct), 1) + " %. За малого числа шарів чи витків дискретність укладки важить більше за об'ємну оцінку — довіряйте пошаровій."
+      });
+    }
+    return out;
+  }
+
+  // ---------- render ----------
+
+  var els = {};
+
+  function renderInputs(res) {
+    NUM_KEYS.forEach(function (k) {
+      var el = els[k];
+      if (!el || el === document.activeElement) return;
+      var v = state[k];
+      el.value = isFinite(v) ? String(Number(v.toPrecision(12))) : "";
+    });
+    if (els.packing !== document.activeElement) els.packing.value = state.packing;
+    if (els.preset !== document.activeElement) els.preset.value = state.preset;
+
+    GEOM_KEYS.forEach(function (k) {
+      var field = document.querySelector('.field[data-field="' + k + '"]');
+      if (!field) return;
+      var bad = res && !res.ok;
+      field.classList.toggle("is-target", state.target === k);
+      field.classList.toggle("is-bad", state.target === k && bad);
+      if (els[k]) els[k].setAttribute("aria-invalid", state.target === k && bad ? "true" : "false");
+      var btn = field.querySelector(".solve-btn");
+      if (btn) btn.setAttribute("aria-pressed", state.target === k ? "true" : "false");
+    });
+
+    if (res && res.solved != null && isFinite(res.solved) && els[state.target] !== document.activeElement) {
+      var digits = state.target === "fiberKm" ? 4 : 2;
+      var shown = Math.round(res.solved * Math.pow(10, digits)) / Math.pow(10, digits);
+      els[state.target].value = String(shown === 0 && res.solved !== 0 ? Number(res.solved.toPrecision(6)) : shown);
+    } else if (res && res.solved == null && state.target !== "fiberKm" && els[state.target] !== document.activeElement) {
+      // keep the user's own number visible
+    }
+
+    var names = { dCore: "діаметр гільзи", lCore: "довжину гільзи", dTubeOut: "діаметр тубуса", fiberKm: "довжину волокна" };
+    els.targetHint.textContent = "шукаємо: " + names[state.target];
+  }
+
+  function renderHero(res) {
+    var host = els.hero;
+    if (!res.ok) {
+      host.innerHTML = '<div class="stat primary"><span class="k">Результат</span><div class="v">—</div><div class="sub">виправте дані нижче</div></div>';
+      return;
+    }
+    var stats = [
+      { k: "Довжина волокна", v: fmtAuto(res.km), u: "км", primary: true, sub: fmtInt(res.km * 1000) + " м" },
+      { k: "Шарів", v: fmtInt(res.occ.layers), u: "", sub: "крок " + fmtAuto(res.cap.shape.pitch) + " мм" },
+      { k: "Витків", v: fmtInt(res.occ.turns), u: "", sub: res.occ.partial ? "верхній шар неповний" : fmtInt(res.cap.shape.turns) + " на шар" },
+      { k: "Ø намотки", v: fmtAuto(2 * res.rWound), u: "мм", sub: "зазор до тубуса " + fmtAuto(res.g.dTubeIn / 2 - res.rWound) + " мм" },
+      { k: "Маса волокна", v: fmtAuto(res.massKg), u: "кг", sub: fmtAuto(res.massKg / Math.max(res.km, 1e-9)) + " кг/км" },
+      { k: "Заповнення", v: fmt(res.fillActual * 100, 1), u: "%", sub: "від об'єму намотки" }
+    ];
+    host.innerHTML = stats.map(function (s) {
+      return '<div class="stat' + (s.primary ? " primary" : "") + '">' +
+        '<span class="k">' + s.k + '</span>' +
+        '<div class="v">' + s.v + (s.u ? '<small>' + s.u + '</small>' : '') + '</div>' +
+        '<div class="sub">' + s.sub + '</div></div>';
+    }).join("");
+  }
+
+  function renderMsgs(res) {
+    var host = els.msgs;
+    if (!res.msgs.length) { host.innerHTML = ""; return; }
+    host.innerHTML = res.msgs.map(function (m) {
+      var cls = m.level === "bad" ? "bad" : m.level === "warn" ? "warn" : "";
+      return '<div class="msg ' + cls + '"><span class="tag">' + m.tag + '</span><span>' + m.text + '</span></div>';
+    }).join("");
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function renderCompare(res) {
+    var host = els.compare;
+    if (!res.ok) { host.innerHTML = ""; return; }
+    var diff = res.volKm > 0 ? (res.km - res.volKm) / res.volKm * 100 : NaN;
+    var rows = [
+      ["Пошарова модель (основна)", fmtAuto(res.km) + " км"],
+      ["Об'ємна оцінка при k = " + fmt(res.eff.packing === "hex" ? HEX_FILL : SQ_FILL, 4), fmtAuto(res.volKm) + " км"],
+      ["Розбіжність", (isFinite(diff) ? (diff >= 0 ? "+" : "") + fmt(diff, 1) : "—") + " %"],
+      ["Повна ємність цієї геометрії", fmtAuto(res.capKm) + " км"],
+      ["Внутрішній Ø тубуса", fmtAuto(res.g.dTubeIn) + " мм"],
+      ["Робоча ширина намотки", fmtAuto(res.g.usableW) + " мм"],
+      ["Об'єм волокна", fmtAuto(Math.PI / 4 * res.eff.dFiber * res.eff.dFiber * res.usedMM / 1000) + " см³"],
+      ["Маса волокна", fmtAuto(res.massKg) + " кг"],
+      ["Лінійна маса", fmtAuto(res.massKg / Math.max(res.km, 1e-9) * 1000) + " г/км"]
+    ];
+    host.innerHTML = rows.map(function (r) {
+      return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>";
+    }).join("");
+  }
+
+  function renderLayers(res) {
+    var body = els.layerRows, note = els.layerNote;
+    if (!res.ok || res.occ.layers === 0) {
+      body.innerHTML = "";
+      note.textContent = "Немає жодного повного шару.";
+      return;
+    }
+    var n = res.occ.layers;
+    var shape = res.cap.shape;
+    var step = Math.max(1, Math.ceil(n / 250));
+    var html = [];
+    for (var i = step === 1 ? 1 : 1; i <= n; i += step) {
+      html.push(layerRow(res, shape, i));
+    }
+    if ((n - 1) % step !== 0) html.push(layerRow(res, shape, n));
+    body.innerHTML = html.join("");
+    note.textContent = (step === 1
+      ? "Показано всі " + fmtInt(n) + " " + plural(n, "шар", "шари", "шарів") +
+        ". Накопичена довжина враховує, що при гексагональній укладці парні шари мають на один виток менше."
+      : "Показано кожен " + step + "-й шар із " + fmtInt(n) + " (та останній).") +
+      (res.occ.partial ? " Зірочкою позначено неповний верхній шар." : "");
+  }
+
+  function layerRow(res, shape, i) {
+    var r = shape.a + (i - 1) * shape.pitch;
+    var turns = turnsInLayer(shape, i);
+    var len = turns * 2 * Math.PI * r;
+    var cum = lengthOfLayers(shape, i, shape.packing);
+    var partial = false;
+    if (i === res.occ.layers) {
+      // the fibre may stop part-way through the outermost layer
+      cum = Math.min(cum, res.usedMM);
+      if (res.occ.partial) {
+        turns = res.occ.topTurns;
+        len = res.occ.topLength;
+        partial = true;
+      }
+    }
+    return "<tr><td>" + i + (partial ? " *" : "") + "</td><td>" + fmt(2 * r, 2) + "</td><td>" +
+      (partial ? fmt(turns, 1) : fmtInt(turns)) +
+      "</td><td>" + fmt(len / 1000, 1) + "</td><td>" + fmt(cum / 1e6, 3) + "</td></tr>";
+  }
+
+  function svgEl(name, attrs) {
+    var e = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (var k in attrs) if (Object.prototype.hasOwnProperty.call(attrs, k)) e.setAttribute(k, String(attrs[k]));
+    return e;
+  }
+
+  function renderRadial(res) {
+    var svg = els.svgRadial;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    radialView = null;
+    radialHighlight = null;
+    hideRadialTip();
+    if (!res.ok) { els.radialLegend.innerHTML = ""; return; }
+    var W = 300, cx = W / 2, cy = 120;
+    var rOuterMM = res.eff.dTubeOut / 2;
+    var s = 112 / rOuterMM;
+    var rTubeOut = rOuterMM * s;
+    var rTubeIn = res.g.dTubeIn / 2 * s;
+    var rCore = res.eff.dCore / 2 * s;
+    var rWound = res.rWound * s;
+
+    // tube wall as a ring
+    var ring = svgEl("path", {
+      d: "M " + cx + " " + (cy - rTubeOut) + " a " + rTubeOut + " " + rTubeOut + " 0 1 0 0.01 0 Z " +
+         "M " + cx + " " + (cy - rTubeIn) + " a " + rTubeIn + " " + rTubeIn + " 0 1 0 0.01 0 Z",
+      "fill-rule": "evenodd", fill: "var(--tube)", opacity: "0.55"
+    });
+    svg.appendChild(ring);
+    svg.appendChild(svgEl("circle", { cx: cx, cy: cy, r: rTubeOut, fill: "none", stroke: "var(--line-strong)", "stroke-width": 1 }));
+
+    // winding annulus
+    if (rWound > rCore + 0.2) {
+      var wind = svgEl("path", {
+        d: "M " + cx + " " + (cy - rWound) + " a " + rWound + " " + rWound + " 0 1 0 0.01 0 Z " +
+           "M " + cx + " " + (cy - rCore) + " a " + rCore + " " + rCore + " 0 1 0 0.01 0 Z",
+        "fill-rule": "evenodd", fill: "var(--fiber)", opacity: "0.3"
+      });
+      svg.appendChild(wind);
+      var n = res.occ.layers;
+      if (n <= 48 && n > 0) {
+        for (var i = 1; i <= n; i++) {
+          var rl = shapeRadius(res, i) * s;
+          svg.appendChild(svgEl("circle", { cx: cx, cy: cy, r: rl, fill: "none", stroke: "var(--fiber)", "stroke-width": Math.max(0.35, res.g.f * s * 0.85), opacity: "0.65" }));
+        }
+      }
+      svg.appendChild(svgEl("circle", { cx: cx, cy: cy, r: rWound, fill: "none", stroke: "var(--fiber)", "stroke-width": 1.2 }));
+    }
+
+    // core
+    svg.appendChild(svgEl("circle", { cx: cx, cy: cy, r: rCore, fill: "var(--core)", stroke: "var(--line-strong)", "stroke-width": 1, opacity: "0.9" }));
+    svg.appendChild(svgEl("circle", { cx: cx, cy: cy, r: 1.6, fill: "var(--ink-3)" }));
+
+    radialHighlight = svgEl("circle", {
+      cx: cx, cy: cy, r: 0, fill: "none",
+      stroke: "var(--accent)", "stroke-width": 1.4, visibility: "hidden"
+    });
+    svg.appendChild(radialHighlight);
+
+    radialView = {
+      cx: cx, cy: cy, s: s,
+      rCore: res.eff.dCore / 2,
+      rWound: res.rWound,
+      rTubeIn: res.g.dTubeIn / 2,
+      rTubeOut: rOuterMM,
+      layers: res.occ.layers,
+      shape: res.cap.shape,
+      packing: res.cap.shape.packing,
+      partial: res.occ.partial,
+      topTurns: res.occ.topTurns,
+      topLength: res.occ.topLength,
+      usedMM: res.usedMM,
+      f: res.g.f,
+      pitch: res.cap.shape.pitch,
+      tWall: res.eff.tWall
+    };
+
+    els.radialLegend.innerHTML = [
+      ["var(--core)", "Ø гільзи", fmtAuto(res.eff.dCore)],
+      ["var(--fiber)", "Ø намотки", fmtAuto(2 * res.rWound)],
+      ["var(--tube)", "Ø тубуса, вн.", fmtAuto(res.g.dTubeIn)],
+      ["var(--line-strong)", "Ø тубуса, зовн.", fmtAuto(res.eff.dTubeOut)]
+    ].map(function (l) {
+      return '<dt><span class="swatch" style="background:' + l[0] + '"></span>' + l[1] + "</dt>" +
+        "<dd>" + l[2] + " мм</dd>";
+    }).join("");
+  }
+
+  function shapeRadius(res, i) {
+    return res.cap.shape.a + (i - 1) * res.cap.shape.pitch;
+  }
+
+  function hideRadialTip() {
+    if (els.radialTip) els.radialTip.hidden = true;
+    if (radialHighlight) radialHighlight.setAttribute("visibility", "hidden");
+  }
+
+  // What sits at a given radius, in mm from the axis.
+  function probeRadius(v, rmm) {
+    if (rmm <= v.rCore) {
+      return { title: "Гільза", rows: [["Діаметр", fmtAuto(2 * v.rCore) + " мм"]], ring: null };
+    }
+    if (rmm <= v.rWound + 1e-9 && v.layers > 0) {
+      var i = Math.round((rmm - v.shape.a) / v.pitch) + 1;
+      if (i < 1) i = 1;
+      if (i > v.layers) i = v.layers;
+      var r = v.shape.a + (i - 1) * v.pitch;
+      var turns = turnsInLayer(v.shape, i);
+      var len = turns * 2 * Math.PI * r;
+      var cum = Math.min(lengthOfLayers(v.shape, i, v.shape.packing), v.usedMM);
+      var partial = false;
+      if (i === v.layers && v.partial) {
+        turns = v.topTurns;
+        len = v.topLength;
+        partial = true;
+      }
+      return {
+        title: "Шар " + i + " з " + fmtInt(v.layers) + (partial ? " · неповний" : ""),
+        rows: [
+          ["Діаметр", fmt(2 * r, 2) + " мм"],
+          ["Витків", partial ? fmt(turns, 1) : fmtInt(turns)],
+          ["Довжина шару", fmt(len / 1000, 1) + " м"],
+          ["Накопичено", fmt(cum / 1e6, 3) + " км"]
+        ],
+        ring: r,
+        layerIndex: i
+      };
+    }
+    if (rmm <= v.rTubeIn) {
+      return { title: "Зазор", rows: [["Радіальний", fmtAuto(v.rTubeIn - v.rWound) + " мм"]], ring: null };
+    }
+    if (rmm <= v.rTubeOut) {
+      return { title: "Стінка тубуса", rows: [["Товщина", fmtAuto(v.tWall) + " мм"], ["Ø зовн.", fmtAuto(2 * v.rTubeOut) + " мм"]], ring: null };
+    }
+    return null;
+  }
+
+  // One tooltip mechanism for both drawings.
+  function showTip(tip, svg, ev, hit) {
+    tip.innerHTML = '<span class="tip-h">' + esc(hit.title) + "</span><dl>" +
+      hit.rows.map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("") +
+      "</dl>";
+    tip.hidden = false;
+    var host = svg.parentNode;
+    var hostBox = host.getBoundingClientRect();
+    var x = ev.clientX - hostBox.left + 14;
+    var y = ev.clientY - hostBox.top + 14;
+    if (x + tip.offsetWidth > hostBox.width) x = Math.max(0, ev.clientX - hostBox.left - tip.offsetWidth - 14);
+    if (y + tip.offsetHeight > hostBox.height) y = Math.max(0, y - tip.offsetHeight - 28);
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  }
+
+  function svgPoint(svg, ev) {
+    var ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    var pt = svg.createSVGPoint();
+    pt.x = ev.clientX;
+    pt.y = ev.clientY;
+    return pt.matrixTransform(ctm.inverse());
+  }
+
+  // Which turn along the axis sits under the cursor, counting from the left flange.
+  function probeTurn(v, layerIndex, xmm) {
+    var shape = v.shape;
+    if (!shape) return null;
+    var offset = shape.packing === "hex" && layerIndex % 2 === 0 ? v.f / 2 : 0;
+    var start = v.gapA + offset;
+    var span = xmm - start;
+    if (span < -v.f / 2 || xmm > v.gapA + v.usableW + 1e-9) return null;
+    var k = Math.floor(span / v.f) + 1;
+    var total = turnsInLayer(shape, layerIndex);
+    if (k < 1) k = 1;
+    if (k > total) return null;
+    var wound = !(v.partial && layerIndex === v.layers) || k <= Math.ceil(v.topTurns - 1e-9);
+    return { index: k, total: total, wound: wound };
+  }
+
+  function hideAxialTip() {
+    if (els.axialTip) els.axialTip.hidden = true;
+    if (axialHighlight) axialHighlight.setAttribute("visibility", "hidden");
+  }
+
+  function setupAxialHover() {
+    var svg = els.svgAxial, tip = els.axialTip;
+
+    svg.addEventListener("pointerleave", hideAxialTip);
+    svg.addEventListener("pointercancel", hideAxialTip);
+
+    svg.addEventListener("pointermove", function (ev) {
+      var v = axialView;
+      if (!v) { hideAxialTip(); return; }
+      var loc = svgPoint(svg, ev);
+      if (!loc) { hideAxialTip(); return; }
+
+      var rmm = Math.abs(loc.y - v.cy) / v.s;
+      var xmm = (loc.x - v.x0) / v.s;
+      var hit = probeRadius(v, rmm);
+      if (!hit) { hideAxialTip(); return; }
+
+      // outside the hub along the axis there is nothing to name
+      if (xmm < -1e-9 || xmm > v.lCore + 1e-9) {
+        if (hit.title !== "Стінка тубуса") { hideAxialTip(); return; }
+      }
+
+      var rows = hit.rows.slice();
+      var turn = null;
+      if (hit.ring != null) {
+        turn = probeTurn(v, hit.layerIndex, xmm);
+        if (turn) {
+          rows.push(["Виток", fmtInt(turn.index) + " з " + fmtInt(turn.total)]);
+          if (!turn.wound) rows.push(["Стан", "ще не намотано"]);
+        } else if (v.gapA > 0 && (xmm < v.gapA || xmm > v.gapA + v.usableW)) {
+          rows.push(["Тут", "торцевий відступ"]);
+        }
+      }
+      showTip(tip, svg, ev, { title: hit.title, rows: rows });
+
+      if (axialHighlight) {
+        while (axialHighlight.firstChild) axialHighlight.removeChild(axialHighlight.firstChild);
+        if (hit.ring != null) {
+          var band = Math.max(1, v.f * v.s);
+          [-1, 1].forEach(function (sign) {
+            axialHighlight.appendChild(svgEl("rect", {
+              x: v.x0 + v.gapA * v.s, y: v.cy + sign * hit.ring * v.s - band / 2,
+              width: Math.max(v.usableW * v.s, 0), height: band,
+              fill: "var(--accent)", opacity: "0.75"
+            }));
+          });
+          if (turn) {
+            var tx = v.x0 + (v.gapA + (turn.index - 0.5) * v.f +
+                     (v.shape.packing === "hex" && hit.layerIndex % 2 === 0 ? v.f / 2 : 0)) * v.s;
+            axialHighlight.appendChild(svgEl("line", {
+              x1: tx, y1: v.cy - hit.ring * v.s - band, x2: tx, y2: v.cy + hit.ring * v.s + band,
+              stroke: "var(--accent)", "stroke-width": Math.max(0.8, band * 0.9), opacity: "0.55"
+            }));
+          }
+          axialHighlight.setAttribute("visibility", "visible");
+        } else {
+          axialHighlight.setAttribute("visibility", "hidden");
+        }
+      }
+    });
+  }
+
+  function setupRadialHover() {
+    var svg = els.svgRadial, tip = els.radialTip;
+
+    svg.addEventListener("pointerleave", hideRadialTip);
+    svg.addEventListener("pointercancel", hideRadialTip);
+
+    svg.addEventListener("pointermove", function (ev) {
+      var v = radialView;
+      if (!v) { hideRadialTip(); return; }
+      var loc = svgPoint(svg, ev);
+      if (!loc) { hideRadialTip(); return; }
+      var dx = loc.x - v.cx, dy = loc.y - v.cy;
+      var rmm = Math.sqrt(dx * dx + dy * dy) / v.s;
+
+      var hit = probeRadius(v, rmm);
+      if (!hit) { hideRadialTip(); return; }
+
+      showTip(tip, svg, ev, hit);
+
+      if (radialHighlight) {
+        if (hit.ring != null) {
+          radialHighlight.setAttribute("r", String(hit.ring * v.s));
+          radialHighlight.setAttribute("stroke-width", String(Math.max(1.1, v.f * v.s)));
+          radialHighlight.setAttribute("visibility", "visible");
+        } else {
+          radialHighlight.setAttribute("visibility", "hidden");
+        }
+      }
+    });
+  }
+
+  function renderAxial(res) {
+    var svg = els.svgAxial;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    axialView = null;
+    axialHighlight = null;
+    hideAxialTip();
+    if (!res.ok) return;
+    var W = 420, H = 240;
+    var padX = 34, padTop = 24;
+    var lenMM = res.eff.lCore;
+    var hMM = res.eff.dTubeOut;
+    var sx = (W - 2 * padX) / Math.max(lenMM, 1e-6);
+    var sy = (H - padTop - 60) / Math.max(hMM, 1e-6);
+    var s = Math.min(sx, sy);
+    var drawW = lenMM * s, drawH = hMM * s;
+    var x0 = (W - drawW) / 2, cy = padTop + drawH / 2;
+
+    var tubeIn = res.g.dTubeIn * s / 2;
+    var tubeOut = res.eff.dTubeOut * s / 2;
+    var core = res.eff.dCore * s / 2;
+    var wound = res.rWound * s;
+    var gapA = res.eff.gapA * s;
+    var windW = res.g.usableW * s;
+
+    // tube walls (top and bottom slabs)
+    [-1, 1].forEach(function (sign) {
+      svg.appendChild(svgEl("rect", {
+        x: x0 - 6, y: sign < 0 ? cy - tubeOut : cy + tubeIn,
+        width: drawW + 12, height: tubeOut - tubeIn,
+        fill: "var(--tube)", opacity: "0.55"
+      }));
+    });
+
+    // winding
+    [-1, 1].forEach(function (sign) {
+      svg.appendChild(svgEl("rect", {
+        x: x0 + gapA, y: sign < 0 ? cy - wound : cy + core,
+        width: Math.max(windW, 0), height: Math.max(wound - core, 0),
+        fill: "var(--fiber)", opacity: "0.32"
+      }));
+      svg.appendChild(svgEl("rect", {
+        x: x0 + gapA, y: sign < 0 ? cy - wound : cy + core,
+        width: Math.max(windW, 0), height: Math.max(wound - core, 0),
+        fill: "none", stroke: "var(--fiber)", "stroke-width": 1
+      }));
+    });
+
+    // core body
+    svg.appendChild(svgEl("rect", { x: x0, y: cy - core, width: drawW, height: 2 * core, fill: "var(--core)", stroke: "var(--line-strong)", "stroke-width": 1, opacity: "0.9" }));
+    // axis
+    var axis = svgEl("line", { x1: x0 - 14, y1: cy, x2: x0 + drawW + 14, y2: cy, stroke: "var(--ink-3)", "stroke-width": 0.7, "stroke-dasharray": "7 3 2 3" });
+    svg.appendChild(axis);
+
+    // dimension for length
+    var dy = padTop + drawH + 20;
+    svg.appendChild(svgEl("path", { d: "M " + x0 + " " + (dy - 4) + " V " + (dy + 4) + " M " + x0 + " " + dy + " H " + (x0 + drawW) + " M " + (x0 + drawW) + " " + (dy - 4) + " V " + (dy + 4), class: "svg-dimline" }));
+    var tl = svgEl("text", { x: x0 + drawW / 2, y: dy + 15, class: "svg-label", "text-anchor": "middle" });
+    tl.textContent = "L = " + fmtAuto(res.eff.lCore) + " мм";
+    svg.appendChild(tl);
+
+    axialHighlight = svgEl("g", { visibility: "hidden" });
+    svg.appendChild(axialHighlight);
+
+    axialView = {
+      x0: x0, cy: cy, s: s,
+      lCore: res.eff.lCore,
+      gapA: res.eff.gapA,
+      usableW: res.g.usableW,
+      f: res.g.f,
+      rCore: res.eff.dCore / 2,
+      rWound: res.rWound,
+      rTubeIn: res.g.dTubeIn / 2,
+      rTubeOut: res.eff.dTubeOut / 2,
+      layers: res.occ.layers,
+      shape: res.cap.shape,
+      pitch: res.cap.shape.pitch,
+      partial: res.occ.partial,
+      topTurns: res.occ.topTurns,
+      topLength: res.occ.topLength,
+      usedMM: res.usedMM,
+      tWall: res.eff.tWall
+    };
+
+    var t2 = svgEl("text", { x: x0 + drawW / 2, y: dy + 30, class: "svg-label dim", "text-anchor": "middle" });
+    t2.textContent = fmtInt(res.cap.shape.turns) + " витків у шарі · " + fmtInt(res.occ.layers) + " " + plural(res.occ.layers, "шар", "шари", "шарів");
+    svg.appendChild(t2);
+  }
+
+  // ---------- state plumbing ----------
+
+  function applyPreset(id) {
+    var pr = null;
+    for (var i = 0; i < PRESETS.length; i++) if (PRESETS[i].id === id) pr = PRESETS[i];
+    state.preset = id;
+    if (pr && pr.d != null) {
+      state.dFiber = pr.d;
+      state.rBend = pr.r;
+      state.density = pr.rho;
+    }
+  }
+
+  function matchPreset() {
+    for (var i = 0; i < PRESETS.length; i++) {
+      var pr = PRESETS[i];
+      if (pr.d != null && Math.abs(pr.d - state.dFiber) < 1e-9 && Math.abs(pr.r - state.rBend) < 1e-9) {
+        state.preset = pr.id;
+        return;
+      }
+    }
+    state.preset = "custom";
+  }
+
+  function update() {
+    var res = compute();
+    lastResult = res;
+    renderInputs(res);
+    renderHero(res);
+    renderMsgs(res);
+    renderCompare(res);
+    renderLayers(res);
+    renderRadial(res);
+    renderAxial(res);
+    els.viewHint.textContent = res.ok
+      ? "масштаб за зовнішнім Ø " + fmtAuto(res.eff.dTubeOut) + " мм"
+      : "";
+    saveState();
+  }
+
+  function setTargetFromEdit(key) {
+    if (state.target !== key) return;
+    state.target = key === "fiberKm" ? "dTubeOut" : "fiberKm";
+  }
+
+  function bindNumber(key) {
+    var el = els[key];
+    el.addEventListener("input", function () {
+      if (GEOM_KEYS.indexOf(key) >= 0) setTargetFromEdit(key);
+      var v = parseNum(el.value);
+      state[key] = v; // NaN when the field is empty or not a number — compute() reports it
+      if (isFinite(v)) manual[key] = v;
+      if (key === "dFiber" || key === "rBend" || key === "density") matchPreset();
+      update();
+    });
+    el.addEventListener("keydown", function (ev) {
+      if (ev.key !== "ArrowUp" && ev.key !== "ArrowDown") return;
+      ev.preventDefault();
+      var cur = parseNum(el.value);
+      if (!isFinite(cur)) cur = 0;
+      var base = key === "dFiber" ? 0.05 : key === "fiberKm" ? 0.1 : 1;
+      var stepv = ev.shiftKey ? base * 10 : ev.altKey ? base / 10 : base;
+      var next = Math.round((cur + (ev.key === "ArrowUp" ? stepv : -stepv)) * 1e6) / 1e6;
+      if (next < 0) next = 0;
+      if (GEOM_KEYS.indexOf(key) >= 0) setTargetFromEdit(key);
+      state[key] = next;
+      manual[key] = next;
+      el.value = String(next);
+      if (key === "dFiber" || key === "rBend" || key === "density") matchPreset();
+      update();
+    });
+    el.addEventListener("blur", function () {
+      update();
+    });
+  }
+
+  function summaryText() {
+    var r = lastResult;
+    if (!r || !r.ok) return "Розрахунок неможливий за поточних даних.";
+    var L = [];
+    L.push("НАМОТКА ОПТОВОЛОКНА");
+    L.push("Гільза: Ø" + fmtAuto(r.eff.dCore) + " × " + fmtAuto(r.eff.lCore) + " мм");
+    L.push("Тубус: Ø" + fmtAuto(r.eff.dTubeOut) + " мм зовн., стінка " + fmtAuto(r.eff.tWall) + " мм (Ø" + fmtAuto(r.g.dTubeIn) + " вн.)");
+    L.push("Волокно: Ø" + fmtAuto(r.eff.dFiber) + " мм, укладка " + (r.eff.packing === "hex" ? "гексагональна" : "рядна"));
+    L.push("Зазори: радіальний " + fmtAuto(r.eff.gapR) + " мм, торцевий " + fmtAuto(r.eff.gapA) + " мм");
+    L.push("");
+    L.push("Довжина волокна: " + fmtAuto(r.km) + " км");
+    L.push("Шарів: " + fmtInt(r.occ.layers) + ", витків: " + fmtInt(r.occ.turns) + " (" + fmtInt(r.cap.shape.turns) + " на шар)");
+    L.push("Ø намотки: " + fmtAuto(2 * r.rWound) + " мм");
+    L.push("Маса волокна: " + fmtAuto(r.massKg) + " кг");
+    L.push("Об'ємна звірка: " + fmtAuto(r.volKm) + " км");
+    return L.join("\n");
+  }
+
+  function copyText(text, btn) {
+    var done = function (ok) {
+      var old = btn.textContent;
+      btn.textContent = ok ? "Скопійовано" : "Не вдалося";
+      setTimeout(function () { btn.textContent = old; }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    } else {
+      done(false);
+    }
+  }
+
+  var STORE_KEY = "fiber-winding-v1";
+
+  function serialize() {
+    var o = {};
+    NUM_KEYS.forEach(function (k) { o[k] = state[k]; });
+    o.packing = state.packing;
+    o.preset = state.preset;
+    o.target = state.target;
+    return o;
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(serialize())); } catch (e) { /* storage unavailable */ }
+    try {
+      var o = serialize();
+      var parts = [];
+      for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) parts.push(k + "=" + encodeURIComponent(o[k]));
+      history.replaceState(null, "", "#" + parts.join("&"));
+    } catch (e) { /* hash unavailable */ }
+  }
+
+  function loadFrom(obj) {
+    if (!obj) return false;
+    var touched = false;
+    NUM_KEYS.forEach(function (k) {
+      var v = parseNum(obj[k]);
+      if (isFinite(v) && v >= 0) { state[k] = v; touched = true; }
+    });
+    if (obj.packing === "hex" || obj.packing === "stack") { state.packing = obj.packing; touched = true; }
+    if (GEOM_KEYS.indexOf(obj.target) >= 0) { state.target = obj.target; touched = true; }
+    if (obj.preset) state.preset = String(obj.preset);
+    return touched;
+  }
+
+  function readHash() {
+    var h = String(location.hash || "").replace(/^#/, "");
+    if (!h) return null;
+    var o = {}, pairs = h.split("&");
+    for (var i = 0; i < pairs.length; i++) {
+      var kv = pairs[i].split("=");
+      if (kv.length !== 2) continue;
+      try {
+        o[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1]);
+      } catch (e) {
+        // a hand-edited link with a stray % — ignore that pair, keep the rest
+      }
+    }
+    return o;
+  }
+
+  function init() {
+    ["dCore", "lCore", "dTubeOut", "fiberKm", "tWall", "gapR", "gapA", "dFiber", "rBend", "density",
+     "packing", "preset", "hero", "msgs", "compare", "layerRows", "layerNote", "svgRadial", "svgAxial",
+     "radialLegend", "radialTip", "axialTip", "targetHint", "viewHint", "btnCopy", "btnLink", "btnReset"].forEach(function (id) {
+      els[id] = document.getElementById(id);
+    });
+
+    document.documentElement.lang = "uk";
+
+    els.preset.innerHTML = PRESETS.map(function (p) {
+      return '<option value="' + p.id + '">' + esc(p.name) + "</option>";
+    }).join("");
+
+    for (var k in DEFAULTS) if (Object.prototype.hasOwnProperty.call(DEFAULTS, k)) state[k] = DEFAULTS[k];
+
+    var restored = false;
+    try {
+      var stored = localStorage.getItem(STORE_KEY);
+      if (stored) restored = loadFrom(JSON.parse(stored));
+    } catch (e) { /* ignore */ }
+    var hash = readHash();
+    if (hash) restored = loadFrom(hash) || restored;
+    if (!restored) matchPreset();
+
+    NUM_KEYS.forEach(bindNumber);
+    setupRadialHover();
+    setupAxialHover();
+
+    els.packing.addEventListener("change", function () {
+      state.packing = els.packing.value;
+      update();
+    });
+    els.preset.addEventListener("change", function () {
+      applyPreset(els.preset.value);
+      update();
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll(".solve-btn"), function (btn) {
+      btn.addEventListener("click", function () {
+        var key = btn.getAttribute("data-solve");
+        if (state.target === key) return;
+        // Freeze a value for the field we are leaving: the number the user typed
+        // there earlier, if any, otherwise whatever was last computed for it.
+        var leaving = state.target;
+        if (isFinite(manual[leaving])) state[leaving] = manual[leaving];
+        else if (lastResult && lastResult.solved != null) state[leaving] = lastResult.solved;
+        state.target = key;
+        update();
+      });
+    });
+
+    els.btnCopy.addEventListener("click", function () { copyText(summaryText(), els.btnCopy); });
+    els.btnLink.addEventListener("click", function () { copyText(location.href, els.btnLink); });
+    els.btnReset.addEventListener("click", function () {
+      for (var k in DEFAULTS) if (Object.prototype.hasOwnProperty.call(DEFAULTS, k)) state[k] = DEFAULTS[k];
+      manual = {};
+      try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
+      update();
+    });
+
+    update();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
