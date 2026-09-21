@@ -182,7 +182,10 @@
   /* --- fields --- */
   .field {
     display: grid;
-    grid-template-columns: 1fr auto;
+    /* a grid item refuses to shrink past its content unless told to, which
+       would push a two-up row wider than the panel */
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 4px 8px;
     align-items: center;
     /* rows keep their natural height: stretching them would push the input
@@ -210,10 +213,11 @@
     color: var(--ink-3);
   }
 
-  .inputwrap { position: relative; display: flex; }
+  .inputwrap { position: relative; display: flex; min-width: 0; }
 
   input[type="text"], select {
     width: 100%;
+    min-width: 0;
     font-family: var(--font-mono);
     font-size: 16px;
     font-weight: 500;
@@ -464,6 +468,19 @@
 
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
 
+  /* Share the label and input rows across the pair, so a label that wraps onto
+     two lines lifts both labels instead of pushing its own input down. */
+  @supports (grid-template-rows: subgrid) {
+    .row2 { grid-template-rows: auto auto; }
+    .row2 .field { grid-row: span 2; grid-template-rows: subgrid; }
+  }
+
+  /* without subgrid, settle the pair on its bottom edge: the inputs are the
+     same height, so they still line up when one label wraps */
+  @supports not (grid-template-rows: subgrid) {
+    .row2 .field { align-self: end; }
+  }
+
   .panel-body > .row2:last-child .field { padding-bottom: 2px; }
 
   @media (max-width: 380px) {
@@ -525,16 +542,11 @@
               <div class="inputwrap"><input type="text" inputmode="decimal" id="dTubeOut" autocomplete="off" spellcheck="false"></div>
               <button class="solve-btn" type="button" data-solve="dTubeOut" title="Обчислювати діаметр тубуса" aria-label="Обчислювати діаметр тубуса">=</button>
             </div>
-            <div class="field" data-field="tubeLen" data-cone="tube">
-              <label for="tubeLen">Довжина тубуса <span class="unit">мм</span></label>
-              <div class="inputwrap"><input type="text" inputmode="decimal" id="tubeLen" autocomplete="off" spellcheck="false"></div>
-              <button class="solve-btn" type="button" data-cone-solve="tube" title="Обчислювати довжину тубуса" aria-label="Обчислювати довжину тубуса">=</button>
+            <div class="field" data-field="fiberKm">
+              <label for="fiberKm">Довжина оптоволокна <span class="unit">км</span></label>
+              <div class="inputwrap"><input type="text" inputmode="decimal" id="fiberKm" autocomplete="off" spellcheck="false"></div>
+              <button class="solve-btn" type="button" data-solve="fiberKm" title="Обчислювати довжину волокна" aria-label="Обчислювати довжину волокна">=</button>
             </div>
-          </div>
-          <div class="field" data-field="fiberKm">
-            <label for="fiberKm">Довжина оптоволокна <span class="unit">км</span></label>
-            <div class="inputwrap"><input type="text" inputmode="decimal" id="fiberKm" autocomplete="off" spellcheck="false"></div>
-            <button class="solve-btn" type="button" data-solve="fiberKm" title="Обчислювати довжину волокна" aria-label="Обчислювати довжину волокна">=</button>
           </div>
         </div>
       </section>
@@ -574,7 +586,7 @@
           <label class="toggle"><input type="checkbox" id="coneOn"> <span>увімкнути</span></label>
         </div>
         <div class="panel-body" id="conePanelBody">
-          <p class="hint" style="margin: 0 0 4px;">Вузький кінець конуса збігається з гільзою, широкий доходить до тубуса з тим самим радіальним зазором, що й намотка. Кут стінки, висота конуса й довжина тубуса — три погляди на одне число: тубус дорівнює гільзі плюс конус. Введіть будь-яке з трьох, два інших порахуються.</p>
+          <p class="hint" style="margin: 0 0 4px;">Вузький кінець конуса збігається з гільзою, широкий доходить до тубуса з тим самим радіальним зазором, що й намотка. Кут стінки й висота конуса задають одне одного — введіть будь-яке, друге порахується. Тубус завжди дорівнює гільзі плюс конус, тож його довжина показана нижче.</p>
           <div class="row2">
             <div class="field" data-cone="angle">
               <label for="coneHalf">Кут від осі <span class="unit">°</span></label>
@@ -714,12 +726,12 @@ k — коефіцієнт заповнення, для гексагональн
     dCore: 60, lCore: 200, dTubeOut: 160, fiberKm: 0,
     tWall: 3, gapR: 1, gapA: 0,
     dFiber: 0.25, packing: "hex", rBend: 30, density: 1.45,
-    coneOn: true, coneHalf: 30, coneH: 79.67, tubeLen: 279.67, coneDrive: "angle",
+    coneOn: true, coneHalf: 30, coneH: 79.67, coneDrive: "angle",
     preset: "g652-250", target: "fiberKm"
   };
 
   var GEOM_KEYS = ["dCore", "lCore", "dTubeOut", "fiberKm"];
-  var NUM_KEYS = ["dCore", "lCore", "dTubeOut", "tubeLen", "fiberKm", "tWall", "gapR", "gapA", "dFiber", "rBend", "density",
+  var NUM_KEYS = ["dCore", "lCore", "dTubeOut", "fiberKm", "tWall", "gapR", "gapA", "dFiber", "rBend", "density",
                   "coneHalf", "coneH"];
   var HEX_PITCH = Math.sqrt(3) / 2;
   // Each capacity probe walks every layer and a solve makes ~1000 probes, so the
@@ -818,16 +830,11 @@ k — коефіцієнт заповнення, для гексагональн
     var rise = rWide - rNarrow;
     if (!(rise > 0)) return null;
 
-    // The tube always spans the hub plus the cone, so the wall angle, the cone
-    // height and the tube length are three views of one number: whichever the
-    // user is driving, the other two follow.
+    // The wall angle and the cone height define each other; whichever the user
+    // drives, the other follows. The tube length is derived from both.
     var half, height, drive = p.coneDrive;
     if (drive === "h") {
       height = p.coneH;
-      if (!(height > 0) || !isFinite(height)) return null;
-      half = Math.atan(rise / height);
-    } else if (drive === "tube") {
-      height = p.tubeLen - p.lCore;
       if (!(height > 0) || !isFinite(height)) return null;
       half = Math.atan(rise / height);
     } else {
@@ -1106,9 +1113,9 @@ k — коефіцієнт заповнення, для гексагональн
     // Where the capacity is genuinely monotonic the staircase never dips, so a
     // bisection alone finds the edge — the grid scan would cost ~900 extra
     // probes, and each probe walks every layer.
-    var monotone = (key === "lCore" && !(p.coneOn && p.coneDrive === "tube")) ||
+    var monotone = (key === "lCore") ||
                    (key === "dTubeOut" && !p.coneOn) ||
-                   (key === "tubeLen");
+                   false;
     if (monotone && increasing) {
       var a = lo, b = hi;
       for (i = 0; i < 100; i++) {
@@ -1357,9 +1364,9 @@ k — коефіцієнт заповнення, для гексагональн
     }
     if (p.coneOn) {
       var coneInput = p.coneDrive === "h" ? p.coneH
-                    : p.coneDrive === "tube" ? p.tubeLen : p.coneHalf;
+                    : p.coneHalf;
       if (!isFinite(coneInput)) {
-        msgs.push({ level: "bad", tag: "Конус", field: p.coneDrive === "h" ? "coneH" : p.coneDrive === "tube" ? "tubeLen" : "coneHalf",
+        msgs.push({ level: "bad", tag: "Конус", field: p.coneDrive === "h" ? "coneH" : "coneHalf",
                     text: "Параметри конуса — порожнє поле або не число." });
         return out;
       }
@@ -1371,19 +1378,12 @@ k — коефіцієнт заповнення, для гексагональн
         msgs.push({ level: "bad", tag: "Конус", field: "coneH", text: "Висота конуса має бути більшою за нуль." });
         return out;
       }
-      if (p.coneDrive === "tube" && target !== "lCore" && !(p.tubeLen - p.lCore > 0)) {
-        msgs.push({
-          level: "bad", tag: "Тубус", field: "tubeLen",
-          text: "Тубус має бути довшим за гільзу — різниця і є висотою конуса."
-        });
-        return out;
-      }
       if (p.coneDrive === "h" && p.coneH < 0) {
         msgs.push({ level: "bad", tag: "Конус", field: "coneH",
                     text: "Висота конуса не може бути від'ємною." });
         return out;
       }
-      if ((p.coneDrive === "h" && p.coneH > 1e4) || (p.coneDrive === "tube" && p.tubeLen > 1e4)) {
+      if (p.coneDrive === "h" && p.coneH > 1e4) {
         msgs.push({ level: "bad", tag: "Конус", field: "coneH",
                     text: "Розміри конуса виходять за розумні межі." });
         return out;
@@ -1451,7 +1451,8 @@ k — коефіцієнт заповнення, для гексагональн
       out.usedMM = cap.mm;
     } else {
       if (!(p.fiberKm > 0)) {
-        msgs.push({ level: "bad", tag: "Ввід", text: "Задайте довжину волокна, більшу за нуль." });
+        msgs.push({ level: "bad", tag: "Ввід", field: "fiberKm",
+                    text: "Задайте довжину волокна, більшу за нуль." });
         return out;
       }
       var solvedValue = null;
@@ -1464,12 +1465,7 @@ k — коефіцієнт заповнення, для гексагональн
         // so the search must start below one fibre diameter
         // with a flare even a hub too short for one turn can still carry fibre
         var loL = p.coneOn ? p.gapA : p.dFiber + 2 * p.gapA;
-        // when the tube is the driver the cone dies once the hub reaches it,
-        // so the search must stop just short of that
-        var hiL = p.coneOn && p.coneDrive === "tube" && isFinite(p.tubeLen)
-          ? Math.max(p.tubeLen - 1e-6, loL + 1e-6)
-          : Math.max(loL * 4, loL + 20000);
-        solvedValue = solveGeom(p, "lCore", targetMM, loL, hiL, true);
+        solvedValue = solveGeom(p, "lCore", targetMM, loL, Math.max(loL * 4, loL + 20000), true);
         if (solvedValue !== null) solvedValue = roundTo(solvedValue, 0.01, true);
       } else if (target === "dCore") {
         var hiC = p.dTubeOut - 2 * p.tWall - 2 * p.gapR - 2 * p.dFiber;
@@ -1540,7 +1536,7 @@ k — коефіцієнт заповнення, для гексагональн
       q[target] = solvedValue;
       // keep the invariant true in the solved geometry, not just on screen
       var qCone = coneGeometry(q);
-      if (q.coneDrive !== "tube") q.tubeLen = q.lCore + (qCone ? qCone.height : 0);
+      q.tubeLen = q.lCore + (qCone ? qCone.height : 0);
       out.effective = q;
       out.cap = capacity(q);
       out.usedMM = targetMM;
@@ -1683,7 +1679,7 @@ k — коефіцієнт заповнення, для гексагональн
     });
 
     var names = { dCore: "діаметр гільзи", lCore: "довжину гільзи", dTubeOut: "діаметр тубуса",
-                  tubeLen: "довжину тубуса", fiberKm: "довжину волокна" };
+                  fiberKm: "довжину волокна" };
     els.targetHint.textContent = "шукаємо: " + names[state.target];
   }
 
@@ -1734,16 +1730,12 @@ k — коефіцієнт заповнення, для гексагональн
     ["coneHalf", "coneH"].forEach(function (k) {
       els[k].disabled = !on;
     });
-    // with no cone the tube simply matches the hub, so it is not editable
-    els.tubeLen.disabled = !on;
-    var tubeBtn = document.querySelector('[data-cone-solve="tube"]');
-    if (tubeBtn) tubeBtn.disabled = !on;
     Array.prototype.forEach.call(document.querySelectorAll("[data-cone-solve]"), function (b) {
       b.disabled = !on;
     });
 
     // the two fields that are not driving are the derived ones
-    ["angle", "h", "tube"].forEach(function (which) {
+    ["angle", "h"].forEach(function (which) {
       var field = document.querySelector('.field[data-cone="' + which + '"]');
       if (!field) return;
       var derived = on && state.coneDrive !== which;
@@ -1756,12 +1748,12 @@ k — коефіцієнт заповнення, для гексагональн
 
     // without a cone the tube is simply as long as the hub
     if (!on) {
+      // with no cone the tube is simply as long as the hub
       var plainLen = res && res.eff && isFinite(res.eff.lCore) ? res.eff.lCore : state.lCore;
-      if (els.tubeLen !== document.activeElement && isFinite(plainLen)) {
-        els.tubeLen.value = String(Math.round(plainLen * 100) / 100);
-        state.tubeLen = plainLen;
-      }
-      els.coneDerived.innerHTML = "";
+      state.tubeLen = plainLen;
+      els.coneDerived.innerHTML = isFinite(plainLen)
+        ? "<dt>Довжина тубуса</dt><dd>" + esc(fmt(plainLen, 2)) + " мм</dd>"
+        : "";
       return;
     }
     if (!c) { els.coneDerived.innerHTML = ""; return; }
@@ -1775,19 +1767,16 @@ k — коефіцієнт заповнення, для гексагональн
       els.coneHalf.value = String(Math.round(c.halfDeg * 100) / 100);
       state.coneHalf = c.halfDeg;
     }
-    if (state.coneDrive !== "tube" && els.tubeLen !== document.activeElement) {
-      // after solving for the hub length the answer lives in res.eff, not state
-      var hubLen = res && res.eff && isFinite(res.eff.lCore) ? res.eff.lCore : state.lCore;
-      var tl = hubLen + c.height;
-      els.tubeLen.value = String(Math.round(tl * 100) / 100);
-      state.tubeLen = tl;
-    }
+    // after solving for the hub length the answer lives in res.eff, not state
+    var hubLen = res && res.eff && isFinite(res.eff.lCore) ? res.eff.lCore : state.lCore;
+    state.tubeLen = hubLen + c.height;
 
     els.coneDerived.innerHTML = [
       ["Ø біля гільзи", fmtAuto(2 * c.rNarrow) + " мм"],
       ["Ø на широкому кінці", fmtAuto(2 * c.rWide) + " мм"],
       ["Повний кут при вершині", fmtAuto(c.angleDeg) + "°"],
-      ["Твірна", fmtAuto(c.slant) + " мм"]
+      ["Твірна", fmtAuto(c.slant) + " мм"],
+      ["Довжина тубуса", fmt(state.tubeLen, 2) + " мм"]
     ].map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("");
   }
 
@@ -1801,6 +1790,7 @@ k — коефіцієнт заповнення, для гексагональн
       ["Розбіжність", (isFinite(diff) ? (diff >= 0 ? "+" : "") + fmt(diff, 1) : "—") + " %"],
       ["Повна ємність цієї геометрії", fmtAuto(res.capKm) + " км"],
       ["Внутрішній Ø тубуса", fmtAuto(res.g.dTubeIn) + " мм"],
+      ["Довжина тубуса", fmt(res.eff.lCore + (res.cone ? res.cone.height : 0), 2) + " мм"],
       ["Робоча ширина намотки", fmtAuto(res.g.usableW) + " мм"],
       ["Об'єм волокна", fmtAuto(Math.PI / 4 * res.eff.dFiber * res.eff.dFiber * res.usedMM / 1000) + " см³"],
       ["Маса волокна", fmtAuto(res.massKg) + " кг"],
@@ -2398,7 +2388,6 @@ k — коефіцієнт заповнення, для гексагональн
       if (GEOM_KEYS.indexOf(key) >= 0) setTargetFromEdit(key);
       if (key === "coneHalf") state.coneDrive = "angle";
       if (key === "coneH") state.coneDrive = "h";
-      if (key === "tubeLen" && state.coneOn) state.coneDrive = "tube";
       var v = parseNum(el.value);
       state[key] = v; // NaN when the field is empty or not a number — compute() reports it
       if (isFinite(v)) manual[key] = v;
@@ -2417,7 +2406,6 @@ k — коефіцієнт заповнення, для гексагональн
       if (GEOM_KEYS.indexOf(key) >= 0) setTargetFromEdit(key);
       if (key === "coneHalf") state.coneDrive = "angle";
       if (key === "coneH") state.coneDrive = "h";
-      if (key === "tubeLen" && state.coneOn) state.coneDrive = "tube";
       state[key] = next;
       manual[key] = next;
       el.value = String(next);
@@ -2435,7 +2423,7 @@ k — коефіцієнт заповнення, для гексагональн
     var L = [];
     L.push("НАМОТКА ОПТОВОЛОКНА");
     L.push("Гільза: Ø" + fmtAuto(r.eff.dCore) + " × " + fmtAuto(r.eff.lCore) + " мм");
-    L.push("Тубус: Ø" + fmtAuto(r.eff.dTubeOut) + " мм зовн. × " + fmtAuto(r.eff.tubeLen) +
+    L.push("Тубус: Ø" + fmtAuto(r.eff.dTubeOut) + " мм зовн. × " + fmtAuto(r.eff.lCore + (r.cone ? r.cone.height : 0)) +
            " мм завдовжки, стінка " + fmtAuto(r.eff.tWall) + " мм (Ø" + fmtAuto(r.g.dTubeIn) + " вн.)");
     L.push("Волокно: Ø" + fmtAuto(r.eff.dFiber) + " мм, укладка " + (r.eff.packing === "hex" ? "гексагональна" : "рядна"));
     L.push("Зазори: радіальний " + fmtAuto(r.eff.gapR) + " мм, торцевий " + fmtAuto(r.eff.gapA) + " мм");
@@ -2503,7 +2491,7 @@ k — коефіцієнт заповнення, для гексагональн
     });
     if (obj.packing === "hex" || obj.packing === "stack") { state.packing = obj.packing; touched = true; }
     if (obj.coneOn !== undefined) { state.coneOn = String(obj.coneOn) === "1" || obj.coneOn === true; touched = true; }
-    if (obj.coneDrive === "h" || obj.coneDrive === "angle" || obj.coneDrive === "tube") {
+    if (obj.coneDrive === "h" || obj.coneDrive === "angle") {
       state.coneDrive = obj.coneDrive; touched = true;
     }
     if (obj.manual) {
@@ -2535,7 +2523,7 @@ k — коефіцієнт заповнення, для гексагональн
   }
 
   function init() {
-    ["dCore", "lCore", "dTubeOut", "tubeLen", "fiberKm", "tWall", "gapR", "gapA", "dFiber", "rBend", "density",
+    ["dCore", "lCore", "dTubeOut", "fiberKm", "tWall", "gapR", "gapA", "dFiber", "rBend", "density",
      "coneHalf", "coneH",
      "packing", "preset", "hero", "msgs", "compare", "layerRows", "layerNote", "svgRadial", "svgAxial",
      "radialLegend", "radialTip", "axialTip", "coneOn", "conePanelBody", "coneDerived",
@@ -2587,8 +2575,7 @@ k — коефіцієнт заповнення, для гексагональн
         var which = btn.getAttribute("data-cone-solve");
         // "=" means "derive this one", so hand the driving to another field
         if (state.coneDrive === which) {
-          var order = ["angle", "h", "tube"];
-          state.coneDrive = order[(order.indexOf(which) + 1) % order.length];
+          state.coneDrive = which === "angle" ? "h" : "angle";
         }
         update();
       });
